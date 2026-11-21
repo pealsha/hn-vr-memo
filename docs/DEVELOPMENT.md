@@ -17,7 +17,7 @@
 |---|---|
 | ソリューション全体のビルド | `dotnet build HnMemo.slnx --configuration Release -warnaserror` |
 | 検証（終了0で合格） | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` |
-| 本人が使う版 `dist/HnMemo` の更新 | `scripts/Build-App.cmd`（`Update-HnMemo.cmd` も同じ処理） |
+| ローカル実行版 `dist/HnMemo` の更新 | `scripts/Build-App.cmd`（`Update-HnMemo.cmd` も同じ処理） |
 | 配布zipの作成 | `scripts/package.ps1`（[配布の準備](DISTRIBUTION.md)） |
 | 見た目の撮影と前後比較 | `scripts/run-isolated.ps1` と `scripts/capture-foundation.ps1`（下の「見た目の撮影と前後比較」） |
 | 手首タップのログの集計 | `node scripts/analyze-wrist-log.mjs`（下の「手首タップの調査」） |
@@ -35,7 +35,7 @@
 テストの作業フォルダと `TEMP`・`TMP` は `artifacts/verify/run-…/` の配下に作ります。合格後は一時フォルダを削除し、`artifacts/verify/tests.log` とプロジェクトごとの `.trx` を残します。失敗時はエラー調査用に一時フォルダを残し、その場所を表示します。
 
 
-### 本人が使う版の更新
+### ローカル実行版の更新
 
 - `Start-HnMemo.cmd` は `dist/HnMemo/HnMemo.exe` を起動します。実行ファイルがない場合は `scripts/Build-App.cmd` で発行してから起動します。`Desktop-HnMemo.cmd` はPC画面を開く `--desktop` を渡します。
 - `Update-HnMemo.cmd` と `Enable-Autostart.cmd` は毎回発行します。Release 構成で一時フォルダに発行し、成功した時点で `dist/HnMemo` を差し替えます。更新の前に、通知領域の「終了」でHnMemoを閉じます。
@@ -48,7 +48,7 @@
 - `tests/HandwriteMemo.Core.Tests`・`Storage.Tests`・`App.Tests`：それぞれ MSTest 3.8.3 のテストライブラリです。App の WinForms テストは STA（Windows UI 用のスレッド設定）で動きます。
 - `input/`：SteamVRに登録するアプリ定義、操作の定義、機種ごとの既定の割り当て。
 - `vendor/openvr`：無改変のValve公式C#バインディングとDLL。`vendor/fluentui-system-icons`：ツールバーのアイコンの元のSVG。
-- `dist/HnMemo`：本人が使う版。Gitの対象外です。
+- `dist/HnMemo`：ローカル実行用の発行先。Gitの対象外です。
 
 | App内のフォルダ | 担当 |
 |---|---|
@@ -109,7 +109,7 @@ dotnet test HnMemo.slnx --configuration Release --filter "FullyQualifiedName~Per
 
 ## 見た目の撮影と前後比較
 
-`FoundationCapture` は、実際の描画処理とPCの部品で、編集・消す円・選択・ゴミ箱・削除の確認・メニュー・無効な部品・手首の合図を撮影します。撮影先に合成ページを作り、本人のデータは使いません。SteamVRとVRChatは起動しません。`run-isolated.ps1` が撮影を見えないデスクトップで動かすので、本人の前面のウィンドウやクリップボードに触れません。
+`FoundationCapture` は、実際の描画処理とPCの部品で、編集・消す円・選択・ゴミ箱・削除の確認・メニュー・無効な部品・手首の合図を撮影します。撮影先に合成ページを作り、利用者の実データは使いません。SteamVRとVRChatは起動しません。`run-isolated.ps1` が撮影を見えないデスクトップで動かすので、実行環境の前面ウィンドウやクリップボードに触れません。
 
 変更前の画像を撮ります。
 

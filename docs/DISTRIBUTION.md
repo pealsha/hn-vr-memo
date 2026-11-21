@@ -5,7 +5,7 @@
 
 製品名は `HnMemo`、配布リポジトリは `pealsha/hn-vr-memo` です。保存先は互換性のため `HandwriteMemo` を継続利用します。
 
-**現在は公開前の実機確認待ちです。** 改名後のself-contained（.NETを同梱する方式）zipを隔離先に作成し、別の場所への展開、同梱部品・ライセンス、使い方表示での起動を確認しました。容量は48,453,949 bytes（約46.2 MiB）です。実HMDでの操作と既存SteamVR登録の更新は未確認です。
+self-contained（.NET を同梱する方式）zip の目安容量は約 46.2 MiB（48,453,949 bytes）です。下のスクリプトはローカルでの生成・検証のみを行い、公開・登録・push は行いません。
 
 ## zipを作る
 
@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 
 ## 方式とバージョン
 
-- 公開前の確認中は **0.9.0**。本人が確認して OK を出したら 1.0.0 にします（2026-10-29 本人の指示）。これまでの内部の作業番号とは分けます。exeの製品バージョン、ヘルプ、zip名に反映します。設定名・app key・manifest・保存形式の版は変えません。
+- リリース候補のバージョンは **0.9.0** とし、実機確認完了後に 1.0.0 へ上げます。exeの製品バージョン、ヘルプ、zip名に反映します。設定名・app key・manifest・保存形式の版は変えません。
 - self-containedのWindows x64版を既定にします。利用者のランタイム導入が不要になる代わりに容量が増え、同梱ランタイムの修正時は再発行が必要です。
 - **単一ファイル化はしません。** OpenVRのネイティブDLL・入力JSON・manifest・ライセンスが必要なので、フォルダ全体を渡す方式を維持します。単一ファイルにするとネイティブ部品の展開やパス解決の確認が増えます。
 - **トリミング（未使用の部品を取り除く処理）はしません。** WinFormsは公式に非対応です。VorticeやOpenVRも含めて、今回の範囲で不要な互換性リスクを増やしません。
@@ -41,11 +41,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 
 同梱処理とは別に、`scripts/package.ps1 -FrameworkDependent` で従来方式の包装を検査できます。`-FrameworkDependent` はランタイムを含めない確認用の指定です。zip名に `framework-dependent-check` を付け、READMEも「.NET 10 Windows Desktop Runtime x64が必要・一般配布不可」へ切り替えます。これは同梱版の成功を意味しません。
 
-## 公開前に残る確認
+## リリース前の確認チェックリスト
 
-1. 既定のpackageと別の隔離先への全体展開は成功済み。同梱 `coreclr.dll`・`hostfxr.dll`・WinFormsのDLL、OpenVRのDLL・入力ファイル・ライセンスを確認した。
-2. ランタイム探索先を存在しない場所に向けた同梱exeの `--help`（使い方表示）は終了0。ただしランタイムを実際に削除したPCでの試験ではない。実フォームは合成データで確認しており、通常の配布exeから実SteamVRへ接続する実機確認は残る。既存プロセスへ接続しているだけの結果を起動成功としない。
-3. 本人がヘッドセット名・接続方法と版を記録し、手首タップ・紫の丸・位置合わせ・描画・保存・復元を実機で確認する。SteamVRの実登録と次回自動起動は、この作業では変更・確認していない。
-4. BOOTHの画像表示・無料設定、GitHubとBOOTHのURL、SmartScreenの実表示を確認する。画像は合成サンプルと表記する。
+1. 隔離先へ zip 全体を展開し、同梱 `coreclr.dll`・`hostfxr.dll`・WinForms の DLL、OpenVR の DLL・入力ファイル・ライセンスが揃っていることを確認する。
+2. 同梱 exe の `--help` および PC 画面・VR 接続の起動を確認する（既存プロセスへの接続ではなく、配布 exe 単体からの起動で確認する）。
+3. 実機 HMD でヘッドセット名・接続方法・版を記録し、手首タップ・紫の丸・位置合わせ・描画・保存・復元・SteamVR 自動起動を確認する。
+4. 配布ページ（GitHub Releases・BOOTH 等）の説明、チェックサム、SmartScreen の表示を確認する。合成サンプル画像を使う場合はその旨を明記する。
 
 非ASCII配置の通知はOverlay接続後に一度出す既存の方式を維持します。PC単独起動時には接続まで保留される点も変更していません。

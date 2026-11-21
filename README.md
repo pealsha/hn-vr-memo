@@ -1,5 +1,7 @@
 # HnMemo
 
+[![Verify](https://github.com/pealsha/hn-vr-memo/actions/workflows/verify.yml/badge.svg)](https://github.com/pealsha/hn-vr-memo/actions/workflows/verify.yml)
+
 HnMemo は、SteamVR の空間にノートを出して手書きする Windows アプリです。
 VRChat と一緒に起動でき、PC でも同じページを開いて書き足せます。
 
@@ -108,7 +110,12 @@ PC 画面の右上にある歯車から変更します。
 
 ## 開発者向け情報
 
+- [開発に参加するには](CONTRIBUTING.md)
 - [開発・ビルド・検証](docs/DEVELOPMENT.md)
 - [アーキテクチャ](docs/ARCHITECTURE.md)
 - [保存形式](docs/storage-format.md)
 - [ライセンス](LICENSE)・[同梱部品のライセンス](THIRD-PARTY-NOTICES.md)
+
+## English Summary
+
+HnMemo is a SteamVR handwriting memo overlay for Windows x64 that runs alongside VRChat and other VR apps, while sharing the same pages with a desktop window. You can summon or hide the board with a wrist tap or dashboard toggle, grab the pen, eraser, or board in VR, draw and resize pages, and review or organize saved pages on PC. Pages are automatically saved as editable JSON stroke data and PNG images. Licensed under the MIT License.
