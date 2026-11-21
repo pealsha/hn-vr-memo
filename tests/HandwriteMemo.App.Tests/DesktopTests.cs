@@ -87,10 +87,13 @@ public sealed class DesktopTests
         CheckWidthSamples(window);
         CheckCatalogHeader(window);
         // Logical size, so the large buttons and the taller header are checked at every display scale.
-        window.Size = new(window.LogicalToDeviceUnits(1540), window.LogicalToDeviceUnits(1020));
+        var largeSize = new Size(window.LogicalToDeviceUnits(1540), window.LogicalToDeviceUnits(1020));
+        window.Size = largeSize;
         Application.DoEvents();
         window.Refresh();
-        Check(toolbar.LargeButtons, "The large window uses the large buttons");
+        // Windows clamps top-level form width to the display; large-button transitions are also tested directly below.
+        if (Screen.FromControl(window).WorkingArea.Width >= largeSize.Width)
+            Check(toolbar.LargeButtons, "The large window uses the large buttons");
         Capture(window, root, "05-large");
         CheckMapping(window.Canvas);
         CheckWidthSamples(window);
@@ -106,6 +109,39 @@ public sealed class DesktopTests
         Check(cut.Strokes.Count >= saved.Strokes.Count, "Partial eraser splits historical line");
         Check(reopened.Undo(), "Historical erasure undo");
         Check(reopened.Strokes.Count == saved.Strokes.Count, "Undo retained every original and added line");
+    }
+
+    [TestMethod]
+    public void ToolbarLargeButtonThresholds()
+    {
+        using var toolbar = new DesktopToolbar { Width = 1200 };
+        var tile = new ToolbarTile("ペン", ToolbarIcon.Pen);
+        var action = new Button { Text = "新しいページ" };
+        toolbar.AddGroup("道具", tile, action);
+
+        toolbar.UpdateButtonMetrics(1079, 96);
+        Check(!toolbar.LargeButtons && toolbar.TileSide == 36 && toolbar.ActionHeight == 32,
+            "Editor width below 1080px keeps standard toolbar metrics");
+
+        toolbar.UpdateButtonMetrics(1080, 96);
+        toolbar.PerformLayout();
+        Check(toolbar.LargeButtons && toolbar.TileSide == 48 && toolbar.ActionHeight == 48,
+            "Editor width at 1080px switches to large toolbar metrics");
+        Check(tile.Width == 48 && tile.Height == 48 && action.MinimumSize.Height == 48,
+            "Layout applies large metrics to tiles and action buttons");
+
+        toolbar.UpdateButtonMetrics(1040, 96);
+        Check(toolbar.LargeButtons, "Hysteresis band preserves large buttons during resize");
+
+        toolbar.UpdateButtonMetrics(1000, 96);
+        Check(!toolbar.LargeButtons && toolbar.TileSide == 36 && toolbar.ActionHeight == 32,
+            "Editor width at 1000px returns to standard toolbar metrics");
+
+        toolbar.UpdateButtonMetrics(1619, 144);
+        Check(!toolbar.LargeButtons, "Scaled 150% DPI waits until 1620px to enter large mode");
+        toolbar.UpdateButtonMetrics(1620, 144);
+        Check(toolbar.LargeButtons && toolbar.TileSide == 72 && toolbar.ActionHeight == 72,
+            "Scaled 150% DPI enters large mode at 1620px with scaled button sizes");
     }
 
     [TestMethod]
