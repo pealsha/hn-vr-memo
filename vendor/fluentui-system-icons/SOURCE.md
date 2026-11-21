@@ -1,16 +1,16 @@
 # Fluent UI System Icons (抜粋)
 
 - 取得元: https://github.com/microsoft/fluentui-system-icons
-- コミット: 83b26348c811f072429427ff48362238656524fe(2026-10-20 に Claude が取得)
+- コミット: `83b26348c811f072429427ff48362238656524fe`（2026-10-20 取得）
 - ライセンス: MIT(同じフォルダの LICENSE)
 - SVG原本は改変していない。アプリで使うのはこのうち一部。線ごと消すの表示だけ、下記の図形を描き足す。使わない候補は不要になれば削除してよい
 
-## Task 018で使用する素材
+## 使用する素材
 
 すべて24 regular。SVG原本は無改変。
 
 - ペン: `ic_fluent_pen_24_regular.svg`
-- 線ごと消す: `ic_fluent_ink_stroke_24_regular.svg`（筆跡の右下に×を重ねる、本人が選んだC案）
+- 線ごと消す: `ic_fluent_ink_stroke_24_regular.svg`（筆跡の右下に×を重ねて表現）
 - 部分消し: `ic_fluent_eraser_24_regular.svg`（通常の消しゴム）
 - 元に戻す: `ic_fluent_arrow_undo_24_regular.svg`
 - やり直す: `ic_fluent_arrow_redo_24_regular.svg`
