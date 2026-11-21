@@ -1,0 +1,63 @@
+{
+  "controller_type": "vive_controller",
+  "name": "HnMemo default",
+  "description": "Hold grip to grab; trigger to draw. Both hands.",
+  "bindings": {
+    "/actions/memo": {
+      "poses": [
+        { "path": "/user/hand/left/pose/grip", "output": "/actions/memo/in/handpose" },
+        { "path": "/user/hand/right/pose/grip", "output": "/actions/memo/in/handpose" }
+      ],
+      "haptics": [
+        { "path": "/user/hand/left/output/haptic", "output": "/actions/memo/out/wristfeedback" },
+        { "path": "/user/hand/right/output/haptic", "output": "/actions/memo/out/wristfeedback" }
+      ],
+      "sources": [
+        {
+          "path": "/user/hand/left/input/grip",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/memo/in/grab"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/left/input/trigger",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/memo/in/draw"
+            }
+          },
+          "parameters": {
+            "click_activate_threshold": "0.55",
+            "click_deactivate_threshold": "0.45"
+          }
+        },
+        {
+          "path": "/user/hand/right/input/grip",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/memo/in/grab"
+            }
+          }
+        },
+        {
+          "path": "/user/hand/right/input/trigger",
+          "mode": "button",
+          "inputs": {
+            "click": {
+              "output": "/actions/memo/in/draw"
+            }
+          },
+          "parameters": {
+            "click_activate_threshold": "0.55",
+            "click_deactivate_threshold": "0.45"
+          }
+        }
+      ]
+    }
+  }
+}

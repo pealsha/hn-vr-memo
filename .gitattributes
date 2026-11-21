@@ -1,0 +1,3 @@
+# Windows NuGet writes CRLF. Keep checkout stable; text normalizes Git blobs to LF.
+**/packages.lock.json text eol=crlf
+*.cs text eol=crlf

@@ -1,0 +1,8 @@
+.tools/
+**/bin/
+**/obj/
+artifacts/
+dist/
+settings.local.json
+spike.local.json
+*.user

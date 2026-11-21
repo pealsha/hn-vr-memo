@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>HnMemo</AssemblyName>
+    <Product>HnMemo</Product>
+    <Title>HnMemo</Title>
+    <Description>HnMemo — VRで使える手書きメモ</Description>
+    <ApplicationIcon>Assets/HnMemo.ico</ApplicationIcon>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <PlatformTarget>x64</PlatformTarget>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/HnMemo.ico" LogicalName="HnMemo.ico" />
+    <InternalsVisibleTo Include="HandwriteMemo.App.Tests" />
+    <None Include="../../input/*" Link="input/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <ProjectReference Include="../HandwriteMemo.Core/HandwriteMemo.Core.csproj" />
+    <ProjectReference Include="../../vendor/openvr/OpenVR.csproj" />
+    <PackageReference Include="Vortice.Direct3D11" Version="3.8.3" />
+    <None Include="../../vendor/openvr/openvr_api.dll" Link="openvr_api.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../vendor/openvr/LICENSE" Link="licenses/OpenVR.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../vendor/fluentui-system-icons/LICENSE" Link="licenses/FluentUI-System-Icons.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../vendor/*-LICENSE.txt" Link="licenses/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../settings.example.json" Link="settings.example.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

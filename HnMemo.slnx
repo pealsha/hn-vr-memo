@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HandwriteMemo.App/HandwriteMemo.App.csproj" />
+    <Project Path="src/HandwriteMemo.Core/HandwriteMemo.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HandwriteMemo.App.Tests/HandwriteMemo.App.Tests.csproj" />
+    <Project Path="tests/HandwriteMemo.Core.Tests/HandwriteMemo.Core.Tests.csproj" />
+    <Project Path="tests/HandwriteMemo.Storage.Tests/HandwriteMemo.Storage.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Fixtures/">
+    <Project Path="tests/Fixtures/SaveInterruption/SaveInterruption.csproj" />
+  </Folder>
+  <Folder Name="/vendor/" />
+  <Folder Name="/vendor/openvr/">
+    <Project Path="vendor/openvr/OpenVR.csproj" />
+  </Folder>
+</Solution>

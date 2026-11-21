@@ -1,0 +1,69 @@
+{
+  "action_sets": [
+    {
+      "name": "/actions/memo",
+      "usage": "leftright"
+    }
+  ],
+  "actions": [
+    {
+      "name": "/actions/memo/in/handpose",
+      "type": "pose",
+      "requirement": "mandatory"
+    },
+    {
+      "name": "/actions/memo/in/grab",
+      "type": "boolean",
+      "requirement": "mandatory"
+    },
+    {
+      "name": "/actions/memo/in/draw",
+      "type": "boolean",
+      "requirement": "mandatory"
+    },
+    {
+      "name": "/actions/memo/in/toggleboard",
+      "type": "boolean",
+      "requirement": "optional"
+    },
+    {
+      "name": "/actions/memo/out/wristfeedback",
+      "type": "vibration",
+      "requirement": "optional"
+    }
+  ],
+  "default_bindings": [
+    {
+      "controller_type": "oculus_touch",
+      "binding_url": "bindings_oculus_touch.json"
+    },
+    {
+      "controller_type": "knuckles",
+      "binding_url": "bindings_knuckles.json"
+    },
+    {
+      "controller_type": "vive_controller",
+      "binding_url": "bindings_vive_controller.json"
+    }
+  ],
+  "localization": [
+    {
+      "language_tag": "en_US",
+      "/actions/memo": "Memo",
+      "/actions/memo/in/grab": "Grab pen / board / eraser",
+      "/actions/memo/in/draw": "Draw / erase / select",
+      "/actions/memo/in/handpose": "Hand grip pose",
+      "/actions/memo/in/toggleboard": "Show / hide board",
+      "/actions/memo/out/wristfeedback": "Wrist tap feedback"
+    },
+    {
+      "language_tag": "ja_JP",
+      "/actions/memo": "メモ",
+      "/actions/memo/in/grab": "ペン・ノート・消しゴムを持つ",
+      "/actions/memo/in/draw": "書く・消す・選ぶ",
+      "/actions/memo/in/handpose": "手の握り姿勢",
+      "/actions/memo/in/toggleboard": "ノートを出す・隠す",
+      "/actions/memo/out/wristfeedback": "手首タップの合図"
+    }
+  ]
+}
