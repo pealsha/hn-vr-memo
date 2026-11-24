@@ -95,7 +95,8 @@ def render_icon(size: int) -> Image.Image:
     scale = 4
     canvas_size = size * scale
     image = make_base(size, scale)
-    draw = ImageDraw.Draw(image)
+    motif = Image.new("RGBA", image.size)
+    draw = ImageDraw.Draw(motif)
     unit = canvas_size / 256.0
     stroke_width = (15 if size >= 32 else 20) * unit
 
@@ -117,7 +118,11 @@ def render_icon(size: int) -> Image.Image:
         width=30 if size >= 32 else 34,
         angle_deg=-45,
     )
-    image.alpha_composite(pen)
+    motif.alpha_composite(pen)
+    motif = motif.crop(motif.getbbox())
+    left_margin = (canvas_size - motif.width) // 2
+    top_margin = (canvas_size - motif.height) // 2
+    image.alpha_composite(motif, dest=(left_margin, top_margin))
     return image.resize((size, size), Image.Resampling.LANCZOS)
 
 
