@@ -94,7 +94,7 @@ internal sealed class VrWristInput(AppSettingsService settings, WristCalibration
             return;
         _nextWristDiagnosticSeconds = seconds + .2;
         string values = measured is { } v ? string.Join("; ",
-            FormattableString.Invariant($"look={v.Looking}; palm={v.PalmFacing:F3} (need >={WristTapGesture.MinimumPalmFacingDot})"),
+            $"look={v.Looking}",
             FormattableString.Invariant($"gaze={v.Gaze:F3} (need >={WristTapGesture.MinimumGazeDot})"),
             FormattableString.Invariant($"headDistance={v.HeadDistance:F3}m (need {WristTapGesture.MinimumHeadDistanceMetres}-{WristTapGesture.MaximumHeadDistanceMetres})"),
             FormattableString.Invariant($"fingerToGrip={v.FingerDistance:F3}m; fingerInGrip=({v.FingerInGrip.X:F3},{v.FingerInGrip.Y:F3},{v.FingerInGrip.Z:F3})"),

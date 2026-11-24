@@ -19,11 +19,17 @@ public sealed class WristTapTests
         internal WristButtonActivationMode Mode = mode;
         internal WristTapState Last;
         internal readonly List<string> Trace = ["seconds,visible,confirmed,pending,triggered,events,reason,x,y,z"];
+        private Vector3 InWristGrip(Vector3 point) => point with { X = hand == HandSide.Left ? point.X : -point.X };
+
+        internal void PlaceTarget(Vector3 target)
+        {
+            var localCentre = InWristGrip(centre ?? s_contact);
+            Wrist = Wrist with { Position = target - Vector3.Transform(localCentre, Wrist.Rotation) };
+        }
+
         internal WristTapState Step(Vector3? point = null, double duration = .12)
         {
-            var p = point ?? s_outside;
-            if (hand == HandSide.Right)
-                p.X = -p.X;
+            var p = InWristGrip(point ?? s_outside);
             int count = Math.Max(1, (int)Math.Ceiling(duration / FrameSeconds));
             for (int i = 0; i < count; i++)
             {
@@ -55,6 +61,7 @@ public sealed class WristTapTests
             foreach (var point in measured)
             {
                 var s = new Sequence(side, centre: point);
+                s.PlaceTarget(s.Head.Position - Vector3.UnitZ * .4f);
                 s.Ready();
                 int before = s.Toggles;
                 s.Pair(point);
@@ -87,6 +94,7 @@ public sealed class WristTapTests
                     foreach (float sign in new[] { -1f, 1f })
                     {
                         var s = new Sequence(hand, centre: point);
+                        s.PlaceTarget(s.Head.Position - Vector3.UnitZ * .4f);
                         var outside = point + axis * sign * .5f;
                         s.Step(outside, .35);
                         for (int tap = 0; tap < 2; tap++)
@@ -116,6 +124,7 @@ public sealed class WristTapTests
             foreach (var point in points)
             {
                 s = new Sequence(hand, centre: point);
+                s.PlaceTarget(s.Head.Position - Vector3.UnitZ * .4f);
                 s.Step(duration: 1.2);
                 int before = s.Toggles;
                 for (int tap = 0; tap < 2; tap++)
@@ -164,23 +173,45 @@ public sealed class WristTapTests
     [TestMethod]
     public void LookAway()
     {
-        for (int kind = 0; kind < 2; kind++)
+        var s = new Sequence();
+        s.Ready();
+        s.Tap();
+        var head = s.Head;
+        s.Head = s.Head with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI) };
+        Check(!s.Step(duration: FrameSeconds).Visible, "look away hides without grace");
+        s.Head = head;
+        s.Ready();
+        s.Tap();
+        Check(s.Toggles == 0, "a new tap after look away is first, not second");
+    }
+
+    [TestMethod]
+    public void CalibratedTargetAcceptsSidewaysAndReversedWristPoses()
+    {
+        var centre = new Vector3(.22f, .02f, 0);
+        foreach (var hand in Enum.GetValues<HandSide>())
+            foreach (float yaw in new[] { 0f, hand == HandSide.Left ? MathF.PI / 2 : -MathF.PI / 2 })
+            {
+                var s = new Sequence(hand, centre: centre);
+                s.Wrist = s.Wrist with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw) };
+                s.PlaceTarget(s.Head.Position - Vector3.UnitZ * .4f);
+                s.Ready();
+                s.Pair(centre);
+                Check(s.Toggles == 1, $"calibrated target in view toggles for {hand} wrist at yaw={yaw}");
+            }
+    }
+
+    [TestMethod]
+    public void CalibratedTargetOutsideViewRejectsTaps()
+    {
+        var centre = new Vector3(.22f, .02f, 0);
+        foreach (var hand in Enum.GetValues<HandSide>())
         {
-            var s = new Sequence();
+            var s = new Sequence(hand, centre: centre);
+            s.Wrist = new(s.Head.Position - Vector3.UnitZ * .25f, Quaternion.Identity);
             s.Ready();
-            s.Tap();
-            var head = s.Head;
-            var wrist = s.Wrist;
-            if (kind == 0)
-                s.Head = s.Head with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI) };
-            else
-                s.Wrist = s.Wrist with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2) };
-            Check(!s.Step(duration: FrameSeconds).Visible, "look away hides without grace");
-            s.Head = head;
-            s.Wrist = wrist;
-            s.Ready();
-            s.Tap();
-            Check(s.Toggles == 0, "a new tap after look away is first, not second");
+            s.Pair(centre);
+            Check(s.Cues == 0 && s.Toggles == 0, $"looking at the {hand} grip does not count when the tap centre is outside view");
         }
     }
     [TestMethod]
@@ -252,27 +283,25 @@ public sealed class WristTapTests
         {
             var s = new Sequence();
             float dot = WristTapGesture.MinimumGazeDot + (allowed ? .02f : -.02f);
-            s.Wrist = s.Wrist with { Position = s.Head.Position + new Vector3(MathF.Sqrt(1 - dot * dot), 0, -dot) * .5f };
-            s.Wrist = s.Wrist with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -MathF.PI + MathF.Asin(dot)) };
+            s.PlaceTarget(s.Head.Position + new Vector3(MathF.Sqrt(1 - dot * dot), 0, -dot) * .5f);
             s.Ready();
             s.Pair();
-            Check((s.Toggles == 1) == allowed, "head direction threshold gates recognition");
+            Check((s.Toggles == 1) == allowed, "view angle to the tap centre gates recognition");
         }
-        foreach (float distance in new[] { WristTapGesture.MinimumHeadDistanceMetres - .02f, WristTapGesture.MaximumHeadDistanceMetres + .02f })
+        (float Distance, bool Allowed)[] distances =
+        [
+            (WristTapGesture.MinimumHeadDistanceMetres - .02f, false),
+            (WristTapGesture.MinimumHeadDistanceMetres, true),
+            (WristTapGesture.MaximumHeadDistanceMetres, true),
+            (WristTapGesture.MaximumHeadDistanceMetres + .02f, false)
+        ];
+        foreach (var (distance, allowed) in distances)
         {
             var s = new Sequence();
-            s.Wrist = s.Wrist with { Position = s.Head.Position - Vector3.UnitZ * distance };
+            s.Wrist = s.Wrist with { Rotation = Quaternion.Identity };
+            s.PlaceTarget(s.Head.Position - Vector3.UnitZ * distance);
             s.Ready(); s.Pair();
-            Check(s.Toggles == 0, "out of reach is rejected");
-        }
-        foreach (bool allowed in new[] { false, true })
-        {
-            var s = new Sequence();
-            s.Wrist = s.Wrist with { Position = s.Head.Position - Vector3.UnitZ * .4f };
-            float dot = WristTapGesture.MinimumPalmFacingDot + (allowed ? .02f : -.02f);
-            s.Wrist = s.Wrist with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -MathF.Asin(dot)) };
-            s.Ready(); s.Pair();
-            Check((s.Toggles == 1) == allowed, "palm threshold gates recognition");
+            Check((s.Toggles == 1) == allowed, $"distance {distance}m to the tap centre gates recognition");
         }
     }
     [TestMethod]
@@ -292,35 +321,50 @@ public sealed class WristTapTests
     [TestMethod]
     public void Cooldown()
     {
+        var s = new Sequence(mode: WristButtonActivationMode.Touch);
+        s.Ready();
+        s.Step(s_contact);
+        Check(s.Step(duration: FrameSeconds).Triggered, "releasing the first tap confirms immediately");
+        Check(!s.Step(duration: .27).Confirmed, "distinct confirmation has ended by 0.28s");
+        var earlyContact = s.Step(s_contact, FrameSeconds);
+        Check(earlyContact.Reason == "cooldown" && earlyContact.Events == WristTapEvent.None,
+            "a new contact just before 0.3s is rejected");
+        s.Step(duration: .08);
+        s.Tap();
+        Check(s.Toggles == 2, "a tap after 0.3s and a fresh release is accepted");
+    }
+
+    [TestMethod]
+    public void CooldownSurvivesResetAndModeChange()
+    {
         var s = new Sequence();
-        s.Ready(); s.Pair(); s.Gesture.Reset(); s.Mode = WristButtonActivationMode.Touch;
-        s.Step(duration: .2); s.Tap();
-        Check(s.Toggles == 1, "reset and mode change retain cooldown");
-        s.Step(s_contact, WristTapGesture.CooldownSeconds + .3);
+        s.Ready();
+        s.Tap();
+        s.Step(s_contact);
+        Check(s.Step(duration: FrameSeconds).Triggered, "first pair confirms on release");
+        s.Gesture.Reset();
+        s.Mode = WristButtonActivationMode.Touch;
+        Check(s.Step(duration: .2).Reason == "cooldown", "reset and mode change retain cooldown");
+        s.Step(s_contact, .4);
         Check(s.Toggles == 1, "cooldown recovery under a finger cannot arm");
         s.Ready(); s.Tap();
         Check(s.Toggles == 2, "release and fresh tap after cooldown works");
     }
     [TestMethod]
-    public void ClapAndClasp()
+    public void RepeatedUnwatchedTapsAndClasps()
     {
-        for (int kind = 0; kind < 3; kind++)
+        foreach (bool clasp in new[] { false, true })
         {
             var s = new Sequence();
-            if (kind == 0)
-                s.Wrist = s.Wrist with { Rotation = Quaternion.Identity }; // palm sideways in a clap
-            if (kind == 1)
+            if (!clasp)
                 s.Head = s.Head with { Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI) };
             s.Ready();
             for (int i = 0; i < 30; i++)
             {
-                if (kind == 2)
-                    s.Step(s_contact, .8); // clasp, hold, separate
-                else
-                    s.Step(s_contact, .08 + i % 3 * .1);
+                s.Step(s_contact, clasp ? .8 : .08 + i % 3 * .1);
                 s.Step(duration: .15);
             }
-            Check(s.Toggles == 0, "clap, tapping without looking, and clasping never toggle");
+            Check(s.Toggles == 0, "tapping without looking and clasping never toggle");
         }
     }
     [TestMethod]
@@ -388,7 +432,7 @@ public sealed class WristTapTests
                 if (kind == 4) p = s_contact + new Vector3((float)random.NextDouble() * .005f);
                 if (kind == 0) s.Available = false;
                 if (kind == 1) s.Head = s.Head with { Rotation = Quaternion.CreateFromYawPitchRoll(2 + (float)random.NextDouble(), 0, 0) };
-                if (kind == 2) s.Wrist = s.Wrist with { Rotation = Quaternion.CreateFromYawPitchRoll(.5f + (float)random.NextDouble(), 0, 0) };
+                if (kind == 2) s.PlaceTarget(s.Head.Position - Vector3.UnitZ * (1.1f + (float)random.NextDouble()));
                 if (kind == 3) p.X += .4f;
                 s.Step(p, FrameSeconds); // last kind stays inside, never a release
             }

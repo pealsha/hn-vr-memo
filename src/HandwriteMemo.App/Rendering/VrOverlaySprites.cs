@@ -80,9 +80,9 @@ internal static class VrOverlaySprites
         }
         g.DrawString("HnMemo  ·  " + (boardVisible ? "ノートは表示中" : "ノートは非表示"), title, ink, 20, 8);
         bool leftHanded = handedness == HandSide.Left;
-        string hand = leftHanded ? "右手首" : "左手首";
+        string hand = leftHanded ? "右手" : "左手";
         string gesture = gestureMode == ToggleGestureMode.WristButton
-            ? $"出す・隠す：{hand}の内側を見て、{(activationMode == WristButtonActivationMode.DoubleTap ? "2回タップ" : "1回タップ")}"
+            ? $"出す・隠す：{hand}のタップ位置を見て、{(activationMode == WristButtonActivationMode.DoubleTap ? "2回タップ" : "1回タップ")}"
             : "出す・隠す：下のボタン、または SteamVR で割り当てたボタン";
         g.DrawString(gesture, text, ink, 20, 53);
         g.DrawString("持つ：黄色の物をグリップ / 書く・消す：道具を持ってトリガー", text, ink, 20, 86);

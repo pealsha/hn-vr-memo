@@ -35,9 +35,9 @@ internal sealed class WristCalibrationController(AppSettingsService settings, Ac
         Changed?.Invoke();
     }
     internal static string WristPlacement(HandSide dominant) => dominant == HandSide.Right
-        ? "右の人差し指を、左手首のタップしたい位置に置きます。"
-        : "左の人差し指を、右手首のタップしたい位置に置きます。";
-    internal const string CalibrationPurpose = "タップが反応しにくいときは、指が触れる位置を登録できます。";
+        ? "右の人差し指を、左手のタップしたい位置に置きます。"
+        : "左の人差し指を、右手のタップしたい位置に置きます。";
+    internal const string CalibrationPurpose = "手首や手の甲など、タップする位置を登録できます。";
     internal string Guidance => !CanCalibrate ? "手首の位置合わせには SteamVR への接続が必要です。" :
         Notice ?? CalibrationPurpose;
     internal bool IsActive => _calibrationWaiting ||

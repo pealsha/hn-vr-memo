@@ -38,8 +38,6 @@ export function parseLog(text) {
       reason: /reason=([^;]+)/.exec(body)[1],
       pending: /pending=True/.test(body),
       looking: /look=True/.test(body),
-      palm: number(body, /palm=(-?[\d.]+)/),
-      palmNeed: number(body, /palm=-?[\d.]+ \(need >=(-?[\d.]+)\)/),
       gaze: number(body, /gaze=(-?[\d.]+)/),
       gazeNeed: number(body, /gaze=-?[\d.]+ \(need >=(-?[\d.]+)\)/),
       headDistance: number(body, /headDistance=([\d.]+)m/),
@@ -65,16 +63,14 @@ function classify(period) {
   const firsts = period.samples.filter((s) => s.events.includes("CueStarted")).length;
   const confirmed = period.samples.filter((s) => s.events.includes("Confirmed")).length;
   const cancels = period.samples.filter((s) => s.events.includes("Cancelled")).map((s) => s.reason);
-  const measured = period.samples.filter((s) => s.palm !== undefined);
+  const measured = period.samples.filter((s) => s.gaze !== undefined);
   const looking = measured.filter((s) => s.looking).length;
   if (confirmed > 0) return `toggled x${confirmed}` + (cancels.length ? `; also cancelled: ${cancels.join(", ")}` : "");
   if (firsts > 0) return `first tap only; cancelled: ${cancels.join(", ") || "none logged"}`;
   if (measured.length === 0) return `blocked: ${[...new Set(period.samples.map((s) => s.reason))].join(", ")}`;
   if (looking === 0) {
-    const low = (value, need) => value !== undefined && need !== undefined && value < need;
-    const palmLow = measured.filter((s) => low(s.palm, s.palmNeed)).length;
-    const gazeLow = measured.filter((s) => low(s.gaze, s.gazeNeed)).length;
-    return `not looking (palm below need ${palmLow}/${measured.length}, gaze below need ${gazeLow}/${measured.length})`;
+    const gazeLow = measured.filter((s) => s.gazeNeed !== undefined && s.gaze < s.gazeNeed).length;
+    return `not looking (gaze below need ${gazeLow}/${measured.length})`;
   }
   return "looking, no contact";
 }
@@ -95,12 +91,11 @@ export function periods(samples, { near = 0.1, from = -Infinity, to = Infinity }
     current.samples.push({ ...sample, distance });
   }
   for (const period of result) {
-    const measured = period.samples.filter((s) => s.palm !== undefined);
+    const gaze = period.samples.map((s) => s.gaze).filter((value) => value !== undefined);
     const distances = period.samples.map((s) => s.distance).filter((d) => d !== undefined);
     period.outcome = classify(period);
     period.minDistance = distances.length ? Math.min(...distances) : undefined;
-    period.palm = measured.length ? median(measured.map((s) => s.palm)) : undefined;
-    period.gaze = measured.length ? median(measured.map((s) => s.gaze)) : undefined;
+    period.gaze = gaze.length ? median(gaze) : undefined;
   }
   return result;
 }
@@ -146,7 +141,7 @@ export function report(text, options = {}) {
   const lines = [
     `handedness: ${handedness.map((h) => `${fixed(h.seconds, 1)}s=${h.hand}`).join(", ") || "not logged"}`,
     `calibrations: ${calibrations.map((c) => `${fixed(c.seconds, 1)}s centre=(${c.centre.map((v) => fixed(v, 3)).join(",")})`).join(", ") || "none"}`,
-    `limits (last sample): radius=${last?.radius ?? "-"}m pairMax=${last?.pairMax ?? "-"}s palmNeed=${last?.palmNeed ?? "-"} gazeNeed=${last?.gazeNeed ?? "-"}`,
+    `limits (last sample): radius=${last?.radius ?? "-"}m pairMax=${last?.pairMax ?? "-"}s gazeNeed=${last?.gazeNeed ?? "-"}`,
     `board toggles by wrist tap: ${toggles.filter((t) => t >= (options.from ?? -Infinity) && t <= (options.to ?? Infinity)).length}`,
     `near-wrist periods (fingertip within ${options.near ?? 0.1}m of the centre, or a tap event): ${found.length}`,
     ...[...outcomes].map(([outcome, count]) => `  ${count} ${outcome}`),
@@ -154,10 +149,10 @@ export function report(text, options = {}) {
     `first-to-second contact seconds: ${range(timings.pairGaps)}`,
     `return direction on release: ${range(timings.returnDots)}`,
     "",
-    "start-end s | samples | min distance m | median palm | median gaze | outcome",
+    "start-end s | samples | min distance m | median gaze | outcome",
   ];
   for (const p of found.slice(-rows))
-    lines.push(`${fixed(p.start, 1)}-${fixed(p.end, 1)} | ${p.samples.length} | ${fixed(p.minDistance, 3)} | ${fixed(p.palm)} | ${fixed(p.gaze)} | ${p.outcome}`);
+    lines.push(`${fixed(p.start, 1)}-${fixed(p.end, 1)} | ${p.samples.length} | ${fixed(p.minDistance, 3)} | ${fixed(p.gaze)} | ${p.outcome}`);
   if (found.length > rows) lines.push(`(only the last ${rows} of ${found.length} periods; use --rows or --from)`);
   return lines.join("\n");
 }

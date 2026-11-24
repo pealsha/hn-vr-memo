@@ -3,14 +3,14 @@ import { test } from "node:test";
 import { parseLog, periods, report, tapTimings } from "./analyze-wrist-log.mjs";
 
 const centre = [0.07, 0, 0];
-// Mirrors the diagnostic row written by OverlayApp.LogWristDiagnostics.
-function sample(seconds, { events = "None", reason = "no", pending = false, look = true, palm = 0.8, gaze = 0.8,
+// Mirrors the diagnostic row written by VrWristInput.LogWristDiagnostics.
+function sample(seconds, { events = "None", reason = "no", pending = false, look = true, gaze = 0.9,
   finger = centre, wrist = "Left", returnDot = "" } = {}) {
   return `${seconds.toFixed(3)}s sampleSeconds=${seconds}; wrist tap: events=${events}; reason=${reason}; pending=${pending ? "True" : "False"}; ` +
-    `confirmed=False; look=${look ? "True" : "False"}; palm=${palm} (need >=0.1); gaze=${gaze} (need >=0.1); ` +
+    `confirmed=False; look=${look ? "True" : "False"}; gaze=${gaze} (need >=0.82); ` +
     `headDistance=0.400m (need 0.15-1); fingerToGrip=0.070m; fingerInGrip=(${finger.join(",")}); controller source=/pose/grip; ` +
     `wrist=${wrist}; right wrist uses mirrored X; haptics=False; returnDot=${returnDot} (need >=0.5); ` +
-    `centre=<${centre.join(", ")}>; radius=0.05; releaseMargin=0.015; contactMax=0.5s; pairMax=1.6s; outsideMin=0.06s`;
+    `centre=<${centre.join(", ")}>; radius=0.09; releaseMargin=0.015; contactMax=0.5s; pairMax=1.6s; outsideMin=0.06s`;
 }
 const far = [0.4, 0.2, 0];
 
@@ -23,9 +23,9 @@ const log = [
   sample(10.4, { events: "ContactStarted", pending: true }),
   "10.480s board shown: wrist tap DoubleTap",
   sample(10.48, { events: "ContactEnded, Confirmed", returnDot: "0.900" }),
-  // Fingertip at the wrist while the palm faces sideways.
-  sample(20.0, { look: false, palm: 0.05, reason: "look away" }),
-  sample(20.2, { look: false, palm: 0.04, reason: "look away" }),
+  // Fingertip at the tap centre while looking away.
+  sample(20.0, { look: false, gaze: 0.5, reason: "look away" }),
+  sample(20.2, { look: false, gaze: 0.4, reason: "look away" }),
   // The hand swings away between taps and the pair times out; this stays one attempt.
   sample(30.0, { events: "ContactStarted, CueStarted", pending: true }),
   sample(30.05, { events: "ContactEnded", pending: true, returnDot: "0.990" }),
@@ -46,11 +46,17 @@ test("classifies each near-wrist period by what stopped it", () => {
   const found = periods(parseLog(log).samples);
   assert.deepEqual(found.map((p) => p.outcome), [
     "toggled x1",
-    "not looking (palm below need 2/2, gaze below need 0/2)",
+    "not looking (gaze below need 2/2)",
     "first tap only; cancelled: pair timeout",
     "looking, no contact",
   ]);
   assert.equal(found[3].minDistance, 0, "right wrist distance uses mirrored X");
+  assert.equal(found[1].gaze, 0.5);
+});
+
+test("reads old log rows that also contain a palm measurement", () => {
+  const legacy = log.replaceAll("; gaze=", "; palm=0.05 (need >=0.1); gaze=");
+  assert.equal(report(legacy), report(log));
 });
 
 test("measures contact length, pair gap and release direction from event rows", () => {

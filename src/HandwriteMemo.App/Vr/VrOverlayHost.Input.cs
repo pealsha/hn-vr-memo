@@ -207,7 +207,7 @@ internal sealed partial class VrOverlayHost
         _view.RenderWristCalibration(head, headValid && !dashboardVisible, _calibration.Notice);
         _wristTap.LogWristDiagnostics(state, seconds);
         VrWristInput.SendFeedback(input, state, Options.Handedness, Options.WristTapHapticsEnabled);
-        string status = state.Triggered ? "手首タップ：切り替え" : state.Pending ? "手首タップ：もう1回" : "手首タップ：内側を見てトントン";
+        string status = state.Triggered ? "手首タップ：切り替え" : state.Pending ? "手首タップ：もう1回" : "手首タップ：見てタップ";
         if (_lastGestureStatus != status)
         {
             _lastGestureStatus = status;

@@ -309,8 +309,8 @@ internal sealed class DesktopSettingsWindow : Form
             ShowChoice(_brightness, AppOptions.BoardBrightnessChoices.ToList().FindIndex(v => Math.Abs(v - options.BoardBrightness) < .001f));
             ShowChoice(_gesture, options.GestureMode == ToggleGestureMode.WristButton ? 0 : 1);
             _tapHint.Text = options.Handedness == HandSide.Right
-                ? "左手首の内側を見て、右の人差し指でタップします。"
-                : "右手首の内側を見て、左の人差し指でタップします。";
+                ? "左手のタップ位置を見て、右の人差し指でタップします。"
+                : "右手のタップ位置を見て、左の人差し指でタップします。";
             ShowChoice(_activation, (int)options.WristButtonActivationMode);
             _activation.Enabled = options.GestureMode == ToggleGestureMode.WristButton;
             ShowChoice(_haptics, options.WristTapHapticsEnabled ? 1 : 0);

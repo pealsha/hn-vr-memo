@@ -11,15 +11,14 @@ public enum WristTapEvent { None = 0, ContactStarted = 1, ContactEnded = 2, CueS
 public readonly record struct WristTapState(bool Visible, bool Confirmed, bool Triggered, bool Pending,
     WristTapEvent Events, string? Reason);
 
-public readonly record struct WristTapMeasurements(float Gaze, float PalmFacing, float HeadDistance,
+public readonly record struct WristTapMeasurements(float Gaze, float HeadDistance,
     float FingerDistance, Vector3 FingerInGrip, bool Looking, BoardPose HeadPose, BoardPose GripPose);
 
 /// <summary>Recognizes look-and-tap from poses and a monotonic clock, without VR or rendering dependencies.</summary>
 public sealed class WristTapGesture
 {
-    // ~35 deg around gaze centre keeps taps restricted to when the wrist is actually being looked at,
-    // allowing a wider 9cm contact radius (10.5cm release) without off-gaze false triggers.
-    public const float MinimumGazeDot = .82f, MinimumPalmFacingDot = .1f;
+    // The tap centre must be within ~35 degrees of the headset's forward direction.
+    public const float MinimumGazeDot = .82f;
     public const float MinimumHeadDistanceMetres = .15f, MaximumHeadDistanceMetres = 1f;
     public static Vector3 ContactCentre => new(.141f, .192f, -.023f);
     public const float ContactRadiusMetres = .09f;
@@ -27,7 +26,7 @@ public sealed class WristTapGesture
     public const float ReleaseMarginMetres = .015f, DiagnosticNearDistanceMetres = .5f;
     public const float MinimumReturnDirectionDot = .5f;
     public const double LookMinimumSeconds = .10, ContactMaximumSeconds = .5, PairMaximumSeconds = 1.6;
-    public const double OutsideMinimumSeconds = .06, CooldownSeconds = .8, MaximumFrameGapSeconds = .2;
+    public const double OutsideMinimumSeconds = .06, CooldownSeconds = .3, MaximumFrameGapSeconds = .2;
     public const double ConfirmationSeconds = .25;
     private double? _lastSeconds, _lookSince, _outsideSince, _contactSince, _firstEntry;
     private double _cooldownUntil = double.NegativeInfinity, _confirmedUntil = double.NegativeInfinity;
@@ -74,21 +73,22 @@ public sealed class WristTapGesture
             return new(false, false, false, false, interrupted ? WristTapEvent.Cancelled : WristTapEvent.None, invalid);
         }
         _lastSeconds = seconds;
-        var toWrist = grip.Position - head.Position;
-        float distance = toWrist.Length();
+        var centrePoint = contactCentre ?? ContactCentre;
+        var localTarget = centrePoint with { X = wristHand == HandSide.Left ? centrePoint.X : -centrePoint.X };
+        var targetWorld = grip.LocalToWorld(localTarget);
+        var toTarget = targetWorld - head.Position;
+        float distance = toTarget.Length();
         var local = grip.WorldToLocal(finger);
         if (!float.IsFinite(distance) || distance < .001f || !Finite(local) || !float.IsFinite(local.LengthSquared()))
         {
             Reset();
             return new(false, false, false, false, WristTapEvent.Cancelled, "invalid geometry");
         }
-        var direction = toWrist / distance;
+        var direction = toTarget / distance;
         float gaze = Vector3.Dot(Vector3.Transform(-Vector3.UnitZ, Quaternion.Normalize(head.Rotation)), direction);
-        float facing = Vector3.Dot(Vector3.Transform(wristHand == HandSide.Left ? Vector3.UnitX : -Vector3.UnitX,
-            Quaternion.Normalize(grip.Rotation)), -direction);
         bool looking = distance >= MinimumHeadDistanceMetres && distance <= MaximumHeadDistanceMetres &&
-            gaze >= MinimumGazeDot && facing >= MinimumPalmFacingDot;
-        Measurements = new(gaze, facing, distance, local.Length(), local, looking, head, grip);
+            gaze >= MinimumGazeDot;
+        Measurements = new(gaze, distance, local.Length(), local, looking, head, grip);
         if (!looking)
         {
             _lookSince = null;
@@ -98,7 +98,6 @@ public sealed class WristTapGesture
         }
         _lookSince ??= seconds;
         var p = local with { X = wristHand == HandSide.Left ? local.X : -local.X };
-        var centrePoint = contactCentre ?? ContactCentre;
         float distanceSquared = Vector3.DistanceSquared(p, centrePoint);
         bool inside = distanceSquared <= ContactRadiusMetres * ContactRadiusMetres;
         bool outside = distanceSquared > (ContactRadiusMetres + ReleaseMarginMetres) * (ContactRadiusMetres + ReleaseMarginMetres);
