@@ -17,12 +17,12 @@ public readonly record struct WristTapMeasurements(float Gaze, float PalmFacing,
 /// <summary>Recognizes look-and-tap from poses and a monotonic clock, without VR or rendering dependencies.</summary>
 public sealed class WristTapGesture
 {
-    public const float MinimumGazeDot = .1f, MinimumPalmFacingDot = .1f;
+    // ~35 deg around gaze centre keeps taps restricted to when the wrist is actually being looked at,
+    // allowing a wider 9cm contact radius (10.5cm release) without off-gaze false triggers.
+    public const float MinimumGazeDot = .82f, MinimumPalmFacingDot = .1f;
     public const float MinimumHeadDistanceMetres = .15f, MaximumHeadDistanceMetres = 1f;
     public static Vector3 ContactCentre => new(.141f, .192f, -.023f);
-    // Repeated taps land a few centimetres apart even after calibration. The release distance (radius + margin)
-    // stays at 6.5cm because a fingertip resting just beyond it between taps must still re-arm.
-    public const float ContactRadiusMetres = .05f;
+    public const float ContactRadiusMetres = .09f;
     public static Vector3 ContactHalfSize => new(ContactRadiusMetres);
     public const float ReleaseMarginMetres = .015f, DiagnosticNearDistanceMetres = .5f;
     public const float MinimumReturnDirectionDot = .5f;
