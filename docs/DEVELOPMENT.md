@@ -18,7 +18,7 @@
 | ソリューション全体のビルド | `dotnet build HnMemo.slnx --configuration Release -warnaserror` |
 | 検証（終了0で合格） | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` |
 | ローカル実行版 `dist/HnMemo` の更新 | `scripts/Build-App.cmd`（`Update-HnMemo.cmd` も同じ処理） |
-| 配布zipの作成 | `scripts/package.ps1`（[配布の準備](DISTRIBUTION.md)） |
+| インストーラーの生成 | `scripts/package.ps1`（[配布の準備](DISTRIBUTION.md)） |
 | 見た目の撮影と前後比較 | `scripts/run-isolated.ps1` と `scripts/capture-foundation.ps1`（下の「見た目の撮影と前後比較」） |
 | 手首タップのログの集計 | `node scripts/analyze-wrist-log.mjs`（下の「手首タップの調査」） |
 | アイコンの再生成 | `python scripts/generate-fluent-icons.py`、`python scripts/generate-app-icons.py`（素材を変えたときだけ） |
@@ -37,7 +37,7 @@
 
 ### ローカル実行版の更新
 
-- `Start-HnMemo.cmd` は `dist/HnMemo/HnMemo.exe` を起動します。実行ファイルがない場合は `scripts/Build-App.cmd` で発行してから起動します。`Desktop-HnMemo.cmd` はPC画面を開く `--desktop` を渡します。
+- 開発用の `Start-HnMemo.cmd` は `dist/HnMemo/HnMemo.exe` を起動します。実行ファイルがない場合は `scripts/Build-App.cmd` で発行してから起動します。手動起動では PC 画面が開きます。`Desktop-HnMemo.cmd` は PC 画面の表示を明示する `--desktop` を渡します。
 - `Update-HnMemo.cmd` と `Enable-Autostart.cmd` は毎回発行します。Release 構成で一時フォルダに発行し、成功した時点で `dist/HnMemo` を差し替えます。更新の前に、通知領域の「終了」でHnMemoを閉じます。
 
 ## 構成

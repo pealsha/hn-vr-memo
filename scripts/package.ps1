@@ -15,6 +15,22 @@ if (-not ($allowedRoots | Where-Object {
     $outputRoot.StartsWith($_ + '\', [StringComparison]::OrdinalIgnoreCase)
 })) { throw 'Package output must be under this repository''s artifacts/ or dist/.' }
 
+$buildInstaller = -not $FrameworkDependent
+$installerScript = Join-Path $repoRoot 'installer\HnMemo.iss'
+if ($buildInstaller) {
+    $iscc = (Get-Command iscc -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source
+    if (-not $iscc) {
+        $iscc = @(
+            (Join-Path $env:LOCALAPPDATA 'Programs\Inno Setup 6\ISCC.exe')
+            'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+            'C:\Program Files\Inno Setup 6\ISCC.exe'
+        ) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    }
+    if (-not $iscc) {
+        throw 'ISCC.exe was not found. Install Inno Setup 6 from https://jrsoftware.org/isdl.php or add its folder to PATH.'
+    }
+}
+
 # Every run gets a new directory. Never replace an installation or reuse a dirty publish folder.
 $runRoot = Join-Path $outputRoot ((Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 $publishRoot = Join-Path $runRoot 'publish'
@@ -77,8 +93,7 @@ if (-not $FrameworkDependent) {
     }
 }
 $runtimeFiles = @($runtimeFiles | Sort-Object -Unique)
-$userFiles = @('README.md', 'THIRD-PARTY-NOTICES.md', 'Start-HnMemo.cmd', 'Desktop-HnMemo.cmd',
-    'Enable-Autostart.cmd', 'Disable-Autostart.cmd')
+$userFiles = @('README.md', 'THIRD-PARTY-NOTICES.md')
 foreach ($relative in ($runtimeFiles + $userFiles)) {
     $sourceRoot = if ($runtimeFiles -contains $relative) { $publishRoot } else { Join-Path $repoRoot 'distribution' }
     $source = Join-Path $sourceRoot $relative
@@ -100,20 +115,29 @@ if ($FrameworkDependent) {
 }
 
 # Examine text and binary files, including UTF-16 strings used in .NET assemblies.
-$files = @(Get-ChildItem -LiteralPath $packageRoot -Recurse -File | Sort-Object FullName)
-$inventory = foreach ($file in $files) {
-    $relative = $file.FullName.Substring($packageRoot.Length + 1).Replace('\', '/')
-    $bytes = [IO.File]::ReadAllBytes($file.FullName)
+function Assert-NoPersonalData([string]$path, [string]$displayName, [switch]$InstallerScript) {
+    $bytes = [IO.File]::ReadAllBytes($path)
     $textViews = @([Text.Encoding]::UTF8.GetString($bytes), [Text.Encoding]::Unicode.GetString($bytes))
     # UTF-16 strings inside a binary may start at either byte alignment.
     if ($bytes.Length -gt 1) { $textViews += [Text.Encoding]::Unicode.GetString($bytes, 1, $bytes.Length - 1) }
     foreach ($value in $textViews) {
+        if ($InstallerScript) {
+            # The public project URL may contain the same name as the local Windows account.
+            $value = $value -creplace '(?m)^AppPublisherURL=https://github\.com/pealsha/hn-vr-memo\r?$', ''
+        }
         if ($value -match '(?i)(?:[A-Z]:[\\/]+(?:Users|home)[\\/]+|/(?:Users|home)/)' -or
             ($env:USERPROFILE -and $value.IndexOf($env:USERPROFILE, [StringComparison]::OrdinalIgnoreCase) -ge 0) -or
             ($env:USERNAME.Length -gt 2 -and $value.IndexOf($env:USERNAME, [StringComparison]::OrdinalIgnoreCase) -ge 0)) {
-            throw "Personal path or local user name found in $relative. No zip was created."
+            throw "Personal path or local user name found in $displayName. No package was created."
         }
     }
+}
+
+Assert-NoPersonalData $installerScript 'installer/HnMemo.iss' -InstallerScript
+$files = @(Get-ChildItem -LiteralPath $packageRoot -Recurse -File | Sort-Object FullName)
+$inventory = foreach ($file in $files) {
+    $relative = $file.FullName.Substring($packageRoot.Length + 1).Replace('\', '/')
+    Assert-NoPersonalData $file.FullName $relative
     '{0} ({1} bytes)' -f $relative, $file.Length
 }
 $inventory | Set-Content -LiteralPath (Join-Path $runRoot 'contents.txt') -Encoding UTF8
@@ -122,12 +146,31 @@ $inventory | ForEach-Object { Write-Output $_ }
 [xml]$props = Get-Content -LiteralPath (Join-Path $repoRoot 'Directory.Build.props')
 $version = $props.SelectSingleNode('//Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part release version.' }
-$suffix = if ($FrameworkDependent) { '-framework-dependent-check' } else { '' }
-$zipPath = Join-Path $runRoot "HnMemo-$version-win-x64$suffix.zip"
-Compress-Archive -LiteralPath $packageRoot -DestinationPath $zipPath -CompressionLevel Optimal
-$hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash
-@("Version: $version", "Self-contained: $(-not $FrameworkDependent)", "Files: $($files.Count)", 'Allowlist: PASS; no work records, tests, PDBs or personal settings copied.',
-    'Personal path/user name search: PASS (UTF-8 and both UTF-16 byte alignments, all packaged files).',
-    "Zip SHA256: $hash") | Set-Content -LiteralPath (Join-Path $runRoot 'verification.txt') -Encoding UTF8
-Write-Output "ZIP: $zipPath"
-Write-Output "SHA256: $hash"
+$packageName = "HnMemo-$version-win-x64"
+$verification = @(
+    "Version: $version"
+    "Self-contained: $(-not $FrameworkDependent)"
+    "Files: $($files.Count)"
+    'Allowlist: PASS; no work records, tests, PDBs or personal settings copied.'
+    'Personal path/user name search: PASS (UTF-8 and both UTF-16 byte alignments, all packaged files and installer script).'
+)
+if ($buildInstaller) {
+    $setupName = "$packageName-setup"
+    $setupPath = Join-Path $runRoot "$setupName.exe"
+    & $iscc /Qp "/DAppVersion=$version" "/DSourceDir=$packageRoot" "/DOutputDir=$runRoot" "/DOutputBaseFilename=$setupName" $installerScript
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $setupPath -PathType Leaf)) {
+        throw "Installer build failed (ISCC exit $LASTEXITCODE)."
+    }
+    $setupHash = (Get-FileHash -LiteralPath $setupPath -Algorithm SHA256).Hash
+    $verification += "Installer SHA256: $setupHash"
+    Write-Output "Installer: $setupPath"
+    Write-Output "Installer SHA256: $setupHash"
+} else {
+    $zipPath = Join-Path $runRoot "$packageName-framework-dependent-check.zip"
+    Compress-Archive -LiteralPath $packageRoot -DestinationPath $zipPath -CompressionLevel Optimal
+    $zipHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash
+    $verification += "Zip SHA256: $zipHash"
+    Write-Output "ZIP: $zipPath"
+    Write-Output "Zip SHA256: $zipHash"
+}
+$verification | Set-Content -LiteralPath (Join-Path $runRoot 'verification.txt') -Encoding UTF8

@@ -80,8 +80,8 @@ internal static class Program
 
     private static void PrintHelp() => Console.WriteLine($"""
         HnMemo {Application.ProductVersion} (Windows x64 / .NET 10)
-        No options              Desktop without SteamVR; hidden overlay when SteamVR is running.
-        --desktop               Open desktop window even when SteamVR is running.
+        No options              Open the desktop window and connect to SteamVR when available.
+        --desktop               Open the desktop window even with --background.
         --background            SteamVR auto-launch: keep desktop hidden until requested.
         --config PATH           Load settings JSON (default: LocalAppData/HandwriteMemo/settings.json).
         --show                  Show board immediately; valid HMD tracking required.

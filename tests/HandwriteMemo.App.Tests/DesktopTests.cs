@@ -11,10 +11,12 @@ public sealed class DesktopTests
     [TestMethod]
     public void LaunchAndMousePolicy()
     {
-        Check(AppHost.ShouldOpenDesktop(false, false, false), "No-VR launch opens desktop");
-        Check(!AppHost.ShouldOpenDesktop(true, false, false), "SteamVR launch stays hidden");
-        Check(!AppHost.ShouldOpenDesktop(false, false, true), "Autostart stays hidden during SteamVR startup");
-        Check(AppHost.ShouldOpenDesktop(true, true, true), "Explicit desktop shortcut opens window");
+        Check(AppHost.ShouldOpenDesktop(desktopRequested: false, backgroundLaunch: false),
+            "Manual launch opens the desktop regardless of SteamVR state");
+        Check(AppHost.ShouldOpenDesktop(desktopRequested: true, backgroundLaunch: false),
+            "Explicit desktop launch opens the window");
+        Check(AppHost.ShouldOpenDesktop(desktopRequested: true, backgroundLaunch: true),
+            "Explicit desktop takes priority over background launch");
         Check(MemoCanvas.AcceptMouse(true, false, 0), "Real mouse still works while pen hovers");
         Check(!MemoCanvas.AcceptMouse(true, false, 0xFF515700), "Native pen's promoted mouse is not duplicate ink");
         Check(MemoCanvas.AcceptMouse(false, false, 0xFF515700), "Mouse-only tablet driver remains supported");

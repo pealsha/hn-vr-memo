@@ -66,7 +66,8 @@ public sealed class AutoStartTests
         Check(notice.Take(fake, nonAsciiExe, manifest) is null, "Reconnect does not repeat notification");
         Check(new AutoStartLocationNotice().Take(fake, exe, Path.Combine(root, "日本語", "app.vrmanifest")) is not null,
             "A non-ASCII manifest also triggers the startup notice");
-        Check(AppHost.ShouldOpenDesktop(false, true, false), "Desktop-only startup is still available");
+        Check(!AppHost.ShouldOpenDesktop(desktopRequested: false, backgroundLaunch: true),
+            "SteamVR autostart keeps the desktop hidden");
 
         Check(AutoStart.Configure("disable", nonAsciiExe, manifest, Connect, Shutdown) == 0 &&
             !fake.Installed && !fake.AutoLaunch && fake.Writes == 4,

@@ -26,7 +26,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
         using var mutex = new Mutex(true, @"Local\HandwriteMemo.v1", out bool acquired);
         if (!acquired)
         {
-            if (!background || desktop)
+            if (ShouldOpenDesktop(desktop, background))
             {
                 var window = FindWindow(null, "HnMemo");
                 if (window != IntPtr.Zero)
@@ -100,7 +100,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
         durationTimer.Tick += (_, _) => ArmDurationTimer();
         try
         {
-            if (ShouldOpenDesktop(!disableVr && SteamVrRunning(), desktopAtStart, background))
+            if (ShouldOpenDesktop(desktopAtStart, background))
                 window.OpenWindow();
             // Start counting only once WinForms begins dispatching messages, after shell/tray setup.
             dispatcher.BeginInvoke(() =>
@@ -272,8 +272,8 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
 
     internal static bool SteamVrRunning() => SteamVrRuntime.IsRunning();
 
-    internal static bool ShouldOpenDesktop(bool steamVrRunning, bool desktopRequested, bool backgroundLaunch) =>
-        desktopRequested || !backgroundLaunch && !steamVrRunning;
+    internal static bool ShouldOpenDesktop(bool desktopRequested, bool backgroundLaunch) =>
+        desktopRequested || !backgroundLaunch;
 
     internal static ContextMenuStrip MakeTrayMenu(Action openDesktop, Action openSaveFolder, Action requestStop)
     {
