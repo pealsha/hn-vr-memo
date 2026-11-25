@@ -6,6 +6,7 @@ AppPublisher=hinoerusi
 AppPublisherURL=https://github.com/pealsha/hn-vr-memo
 DefaultDirName={autopf}\HnMemo
 DisableDirPage=yes
+DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
