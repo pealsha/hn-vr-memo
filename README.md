@@ -76,9 +76,10 @@ VR で書いたメモは PC 画面とそのまま共有されます。左の「�
 | 保存に失敗した | 筆跡はアプリ内に保持される。空き容量や保存先を確認し、PC 画面の「保存を再試行」を押す。終了時に復旧コピーの通知が出た場合は `%LOCALAPPDATA%\HandwriteMemo\Recovery` を確認する |
 | 起動しない・自動起動しない | インストーラーで再インストールするか、SteamVR 起動中に PC 設定の「SteamVR と一緒に起動」を入れ直す。実行ログは `%LOCALAPPDATA%\HandwriteMemo\logs` に出力される |
 
-## 開発者向け情報
+## 不具合報告・開発者向け情報
 
-- [開発への参加（CONTRIBUTING.md）](CONTRIBUTING.md)
+不具合や気づいた点があれば、[Issues](https://github.com/pealsha/hn-vr-memo/issues) でお知らせください。
+
 - [開発・ビルド・検証](docs/DEVELOPMENT.md)
 - [アーキテクチャ](docs/ARCHITECTURE.md)
 - [保存形式](docs/storage-format.md)
