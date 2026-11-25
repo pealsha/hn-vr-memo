@@ -11,7 +11,7 @@ public sealed class DesktopCatalogTests
     [TestMethod]
     public void OpeningListedPagesKeepsRowsAndScroll()
     {
-        var folder = Directory.CreateTempSubdirectory("hnmemo-catalog-");
+        var folder = Directory.CreateTempSubdirectory("hnvrmemo-catalog-");
         try
         {
             var (engine, page) = CreatePages(folder.FullName, 12);
@@ -53,7 +53,7 @@ public sealed class DesktopCatalogTests
     [TestMethod]
     public void ReloadAfterSavingKeepsScrollAndReusesUnchangedThumbnail()
     {
-        var folder = Directory.CreateTempSubdirectory("hnmemo-previews-");
+        var folder = Directory.CreateTempSubdirectory("hnvrmemo-previews-");
         try
         {
             var (_, page) = CreatePages(folder.FullName, 12);

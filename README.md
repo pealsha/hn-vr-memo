@@ -1,11 +1,11 @@
-# HnMemo
+# HnVRMemo
 
 SteamVR の空間にノートを出して手書きできる、Windows 用の手書きメモ帳です。  
 VRChat をプレイしながら思いついた数式・単語・アイデアを書き留め、あとから VR 内でも PC 画面でも見返したり書き足したりできます。自分用に作ったので、使いたい方がいれば使ってください。
 
 | VR 内での手書き | PC 画面での閲覧・編集 |
 | :---: | :---: |
-| ![VR 内で HnMemo に手書きしている様子](docs/images/vr-memo.png) | ![PC 画面で同じメモを表示・編集している様子](docs/images/desktop-memo.png) |
+| ![VR 内で HnVRMemo に手書きしている様子](docs/images/vr-memo.png) | ![PC 画面で同じメモを表示・編集している様子](docs/images/desktop-memo.png) |
 
 ## 動作環境
 
@@ -15,7 +15,7 @@ Windows 10 と 11 に対応しています。VR で使うには、SteamVR が動
 
 ## インストール
 
-配布ページからインストーラー（`HnMemo-*-win-x64-setup.exe`）をダウンロードして実行してください。
+配布ページからインストーラー（`HnVRMemo-*-win-x64-setup.exe`）をダウンロードして実行してください。
 
 - BOOTH <!-- BOOTH 公開後にショップページ URL を設定 -->（公開準備中）
 - GitHub Releases で [最新版をダウンロード](https://github.com/pealsha/hn-vr-memo/releases/latest)

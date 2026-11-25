@@ -1,4 +1,4 @@
-// Summarises wrist-tap attempts in a HnMemo run log, so a failure report can be read without dumping samples.
+// Summarises wrist-tap attempts in a HnVRMemo run log, so a failure report can be read without dumping samples.
 // Usage: node scripts/analyze-wrist-log.mjs [log] [--from seconds] [--to seconds] [--near metres] [--rows count]
 // Without a log path, the newest file in %LOCALAPPDATA%\HandwriteMemo\logs is read.
 import { readdirSync, readFileSync, statSync } from "node:fs";

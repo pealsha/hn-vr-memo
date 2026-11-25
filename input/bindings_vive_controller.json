@@ -1,6 +1,6 @@
 {
   "controller_type": "vive_controller",
-  "name": "HnMemo default",
+  "name": "HnVRMemo default",
   "description": "Hold grip to grab; trigger to draw. Both hands.",
   "bindings": {
     "/actions/memo": {

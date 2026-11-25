@@ -159,7 +159,7 @@ public sealed class ListMultiselectTests
         UndoMove();
         Check(page.Catalog.List().Count == 5 && page.Catalog.List(true).Count == 0, "Undo restores all pages without saving blank");
         window.Hide();
-        Console.WriteLine("PASS: Task 026 batch selection, pin, move/undo, neighbour/blank shared session, busy/resize/save protection and partial move failure: " + root);
+        Console.WriteLine("PASS: batch selection, pin, move/undo, neighbour/blank shared session, busy/resize/save protection and partial move failure: " + root);
     }
 
     private static void Key(DesktopWindow window, Keys keys)

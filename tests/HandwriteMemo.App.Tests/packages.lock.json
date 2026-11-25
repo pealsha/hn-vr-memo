@@ -196,7 +196,7 @@
       "handwritememo.core": {
         "type": "Project"
       },
-      "HnMemo": {
+      "HnVRMemo": {
         "type": "Project",
         "dependencies": {
           "HandwriteMemo.Core": "[0.9.0, )",

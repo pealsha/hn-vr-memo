@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Valve.VR;
 
 namespace HandwriteMemo.App;
@@ -5,12 +6,12 @@ namespace HandwriteMemo.App;
 internal static class AutoStart
 {
     public const string AppKey = "handwrite-memo.v1";
-    internal static string ExecutablePath => Path.Combine(AppContext.BaseDirectory, "HnMemo.exe");
+    internal static string ExecutablePath => Path.Combine(AppContext.BaseDirectory, "HnVRMemo.exe");
     public static string ManifestPath => Path.Combine(AppContext.BaseDirectory, "input", "app.vrmanifest");
 
     internal const string NotRunningMessage = "現在のオン・オフは SteamVR の起動中に確認できます。";
     internal const string LocationMessage = "SteamVR は日本語などの非ASCII文字を含むパスからの自動起動に失敗するため、登録できません。\n" +
-        "C:\\HnMemo など、パス全体が半角英数字・記号だけの場所へフォルダごと移してください。\n" +
+        "C:\\HnVRMemo など、パス全体が半角英数字・記号だけの場所へフォルダごと移してください。\n" +
         "Windows のユーザー名が日本語の場合、ドキュメントやデスクトップの下も使えません。";
 
     internal static bool HasNonAsciiPath(string executablePath, string manifestPath) =>
@@ -20,6 +21,86 @@ internal static class AutoStart
     {
         using var log = new RunLog();
         return Configure(command, ExecutablePath, ManifestPath, Connect, OpenVR.Shutdown, log.Event);
+    }
+
+    internal static int ConfigureDeferred(string? configPath)
+    {
+        RunLog? log = null;
+        try
+        {
+            log = new RunLog();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine("Autostart log unavailable: " + e.Message);
+        }
+        using (log)
+            return ConfigureDeferred(configPath, ExecutablePath, ManifestPath, SteamVrRuntime.IsRunning,
+                Connect, OpenVR.Shutdown, Report);
+
+        void Report(string message)
+        {
+            try
+            {
+                if (log is not null)
+                {
+                    log.Event(message);
+                    return;
+                }
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                Console.Error.WriteLine("Autostart log write failed: " + e.Message);
+            }
+            Console.Error.WriteLine(message);
+        }
+    }
+
+    internal static int ConfigureDeferred(string? configPath, string executablePath, string manifestPath,
+        Func<bool> steamVrIsRunning, Func<IOpenVrApplications> connect, Action shutdown, Action<string> report)
+    {
+        if (HasNonAsciiPath(executablePath, manifestPath))
+        {
+            report(LocationMessage);
+            return 0;
+        }
+
+        AutoStartRequest? pending = new(true);
+        try
+        {
+            if (steamVrIsRunning())
+            {
+                Configure("enable", executablePath, manifestPath, connect, shutdown, report);
+                pending = null;
+            }
+        }
+        catch (Exception e)
+        {
+            report("Immediate autostart registration failed: " + e.Message);
+        }
+
+        try
+        {
+            configPath ??= AppOptions.DefaultConfigPath;
+            AppOptions options;
+            try
+            {
+                options = AppOptions.Load(configPath);
+            }
+            catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException)
+            {
+                options = new AppOptions();
+            }
+
+            var settings = new AppSettingsService(options, report, configPath);
+            if (settings.TrySaveAutoStartRequest(pending) && pending is not null)
+                report("Autostart enable requested for the next SteamVR connection.");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or JsonException or ArgumentException or NotSupportedException)
+        {
+            report("Autostart settings unavailable: " + e.Message);
+        }
+        return 0;
     }
 
     // Keep the SteamVR connection at this boundary so tests never change a real registration.
@@ -35,7 +116,7 @@ internal static class AutoStart
             if (HasNonAsciiPath(executablePath, manifestPath))
                 throw new InvalidOperationException(LocationMessage);
             if (!File.Exists(executablePath))
-                throw new FileNotFoundException("HnMemo.exe must exist beside this application.", executablePath);
+                throw new FileNotFoundException("HnVRMemo.exe must exist beside this application.", executablePath);
         }
         try
         {
@@ -65,7 +146,7 @@ internal static class AutoStart
             if (HasNonAsciiPath(executablePath, manifestPath))
                 throw new InvalidOperationException(LocationMessage);
             if (!File.Exists(executablePath))
-                throw new FileNotFoundException("HnMemo.exe must exist beside this application.", executablePath);
+                throw new FileNotFoundException("HnVRMemo.exe must exist beside this application.", executablePath);
         }
         if (command == "enable")
         {
@@ -177,7 +258,7 @@ internal sealed class AutoStartLocationNotice
             return null;
         _shown = true;
         return "この置き場所には日本語などがあり、SteamVR から自動起動できません。" +
-            "自動起動を解除し、C:\\HnMemo などへ移して登録し直してください。" +
+            "自動起動を解除し、C:\\HnVRMemo などへ移して登録し直してください。" +
             "ユーザー名が日本語の場合、ドキュメント・デスクトップの下も使えません。PC画面は使えます。";
     }
 }

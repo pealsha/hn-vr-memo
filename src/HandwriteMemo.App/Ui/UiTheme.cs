@@ -10,7 +10,7 @@ internal static class UiTheme
 
     private static Icon LoadAppIcon()
     {
-        using var stream = typeof(UiTheme).Assembly.GetManifestResourceStream("HnMemo.ico")!;
+        using var stream = typeof(UiTheme).Assembly.GetManifestResourceStream("HnVRMemo.ico")!;
         return new Icon(stream);
     }
 

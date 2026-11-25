@@ -441,7 +441,7 @@ public sealed class WristTapTests
         }
         Directory.CreateDirectory("artifacts/task-036");
         File.WriteAllLines("artifacts/task-036/random-motion.log", summary);
-        Console.WriteLine("Task 036: 100000 seeded random negative samples, 0 toggles.");
+        Console.WriteLine("100000 seeded random negative samples, 0 toggles.");
     }
     [TestMethod]
     public void RandomGrammar()
@@ -501,6 +501,6 @@ public sealed class WristTapTests
         Directory.CreateDirectory("artifacts/task-036");
         File.WriteAllLines("artifacts/task-036/random-walks.log", summary);
         Check(total <= MaximumRandomWalkToggles, $"random walks toggled {total} times; see artifacts/task-036/random-failure-*.log");
-        Console.WriteLine($"Task 036: 200000 seeded independent random-walk samples, {total} toggles (at most {MaximumRandomWalkToggles}).");
+        Console.WriteLine($"200000 seeded independent random-walk samples, {total} toggles (at most {MaximumRandomWalkToggles}).");
     }
 }

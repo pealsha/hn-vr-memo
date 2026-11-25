@@ -28,7 +28,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
         {
             if (ShouldOpenDesktop(desktop, background))
             {
-                var window = FindWindow(null, "HnMemo");
+                var window = FindWindow(null, "HnVRMemo");
                 if (window != IntPtr.Zero)
                 {
                     GetWindowThreadProcessId(window, out uint owner);
@@ -63,7 +63,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
         using var window = new DesktopWindow(engine, page, Seconds);
         window.ConfigureSettings(() => new DesktopSettingsWindow(settings, autoStart, calibration, page, Seconds), settings);
         _ = window.Handle; // Available for foreground permission even after a hidden SteamVR launch.
-        using var tray = new NotifyIcon { Icon = UiTheme.AppIcon, Text = "HnMemo" };
+        using var tray = new NotifyIcon { Icon = UiTheme.AppIcon, Text = "HnVRMemo" };
         using var vr = new VrOverlayHost(settings, calibration, engine, page, log, Seconds, RequestUserExit);
         using var menu = MakeTrayMenu(window.OpenWindow,
             () => Process.Start(new ProcessStartInfo(settings.Current.SaveFolder) { UseShellExecute = true }), RequestUserExit);
@@ -215,7 +215,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
                 Notify(new("保存できません", "終了を中止しました。保存先を確認し、PC画面の「保存を再試行」ボタンを押してください。", NotificationIcon.Error));
         }
 
-        void OnGestureStatusChanged(string status) => tray.Text = "HnMemo / " + status;
+        void OnGestureStatusChanged(string status) => tray.Text = "HnVRMemo / " + status;
 
         void OnPageChanged(SessionChange change)
         {
@@ -223,7 +223,7 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
                 return;
             notifiedError = page.Error;
             if (notifiedError is not null)
-                Notify(new("HnMemo — 保存できません", MemoSession.SaveFailureMessage +
+                Notify(new("HnVRMemo — 保存できません", MemoSession.SaveFailureMessage +
                     "\nPC画面を開き、「保存を再試行」ボタンを押してください。", NotificationIcon.Error));
         }
 
@@ -237,10 +237,10 @@ internal sealed class AppHost(AppOptions options, double? duration, bool showAtS
         if (page.Save(Seconds()))
             return;
         if (!page.EmergencySave(out string? folder))
-            MessageBox.Show("保存と復旧コピーに失敗しました。直前の変更は未保存です。", "HnMemo — 未保存");
+            MessageBox.Show("保存と復旧コピーに失敗しました。直前の変更は未保存です。", "HnVRMemo — 未保存");
         else if (folder is not null)
             MessageBox.Show("通常の保存先に保存できませんでした。復旧コピーを次へ保存しました。\n" + folder,
-                "HnMemo — 保存先を確認してください", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                "HnVRMemo — 保存先を確認してください", MessageBoxButtons.OK, MessageBoxIcon.Warning);
     }
 
     internal void RequestStop()

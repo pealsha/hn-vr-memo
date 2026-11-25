@@ -225,7 +225,7 @@ public sealed class ContextUndoTests
         Application.DoEvents();
         Capture(window, root, "list-minimum");
         window.Hide();
-        Console.WriteLine("PASS: Task 030 row/background/empty-list menus, contextual undo, text/ink routing, restore shortcut, quiet success and visible error recovery: " + root);
+        Console.WriteLine("PASS: row/background/empty-list menus, contextual undo, text/ink routing, restore shortcut, quiet success and visible error recovery: " + root);
     }
 
     private static bool VisibleButton(Control window, string text) => Descendants(window).OfType<Button>().Any(b => b.Text == text && b.Visible);

@@ -342,7 +342,7 @@ public sealed class DesktopTests
         bool checkedHidden = false, checkedShown = false;
         activateTimer.Tick += (_, _) =>
         {
-            bool visible = Application.OpenForms.Cast<Form>().Any(f => f.Visible && f.Text == "HnMemo");
+            bool visible = Application.OpenForms.Cast<Form>().Any(f => f.Visible && f.Text == "HnVRMemo");
             if (!checkedHidden)
             {
                 Check(!visible, "Background launch is hidden");

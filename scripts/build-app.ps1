@@ -1,10 +1,10 @@
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 $dist = [IO.Path]::GetFullPath((Join-Path $MemoRoot 'dist'))
-$output = Join-Path $dist 'HnMemo'
+$output = Join-Path $dist 'HnVRMemo'
 $id = [Guid]::NewGuid().ToString('N')
-$stage = Join-Path $dist "HnMemo-stage-$id"
-$previous = Join-Path $dist "HnMemo-previous-$id"
+$stage = Join-Path $dist "HnVRMemo-stage-$id"
+$previous = Join-Path $dist "HnVRMemo-previous-$id"
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 
 Push-Location $MemoRoot
@@ -24,7 +24,7 @@ try {
     if (Test-Path -LiteralPath $previous) {
         [IO.Directory]::Delete($previous, $true)
     }
-    Write-Host 'HnMemo published to dist/HnMemo.'
+    Write-Host 'HnVRMemo published to dist/HnVRMemo.'
 } finally {
     Pop-Location
     if (Test-Path -LiteralPath $stage) {

@@ -47,7 +47,7 @@ public sealed class BrandingUiTests
         Check(window.SettingsButton.Enabled, "Configuring settings enables the settings button");
         window.Show();
         Application.DoEvents();
-        Check(window.Text == "HnMemo" && ReferenceEquals(window.Icon, UiTheme.AppIcon), "PC title and product icon");
+        Check(window.Text == "HnVRMemo" && ReferenceEquals(window.Icon, UiTheme.AppIcon), "PC title and product icon");
         Capture(window, "desktop");
         window.SelectButton.PerformClick();
         Capture(window, "desktop-selection");
@@ -55,7 +55,7 @@ public sealed class BrandingUiTests
         window.SettingsButton.PerformClick();
         Application.DoEvents();
         using var settings = window.OwnedForms.OfType<DesktopSettingsWindow>().Single();
-        Check(settings.Text == "設定 — HnMemo" && settings.AutoStartSwitch.Checked, "settings title and mocked existing autostart");
+        Check(settings.Text == "設定 — HnVRMemo" && settings.AutoStartSwitch.Checked, "settings title and mocked existing autostart");
         Capture(settings, "settings");
         settings.HandChoice.SelectedIndex = 1;
         settings.BrightnessChoice.SelectedIndex = 2;
@@ -86,7 +86,7 @@ public sealed class BrandingUiTests
             "PC: select/unselect, open settings, change handedness/brightness, unavailable registration and retry, minimum size.",
             "VR dashboard: production-rendered texture at default and changed settings; HMD visibility and controller input are unverified.",
             "No singleton entry point, user data, real SteamVR registration or existing process was used."]);
-        Console.WriteLine("PASS: HnMemo PC/settings/icon and synthetic controls/retry; PC/VR textures saved for independent visual review.");
+        Console.WriteLine("PASS: HnVRMemo PC/settings/icon and synthetic controls/retry; PC/VR textures saved for independent visual review.");
 
         void Stroke(params Vector2[] points)
         {

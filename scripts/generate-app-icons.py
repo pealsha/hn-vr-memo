@@ -1,4 +1,4 @@
-"""Generate the HnMemo application icon (D1: shared prototype base + open note frame and pen)."""
+"""Generate the HnVRMemo application icon (D1: shared prototype base + open note frame and pen)."""
 import argparse
 import io
 import math
@@ -147,13 +147,13 @@ def main() -> None:
     args = parser.parse_args()
 
     ASSETS.mkdir(parents=True, exist_ok=True)
-    write_ico(ASSETS / "HnMemo.ico")
+    write_ico(ASSETS / "HnVRMemo.ico")
 
     if args.output_directory:
         out_dir = ROOT / args.output_directory
         out_dir.mkdir(parents=True, exist_ok=True)
         for size in SIZES:
-            render_icon(size).save(out_dir / f"HnMemo-{size}.png")
+            render_icon(size).save(out_dir / f"HnVRMemo-{size}.png")
 
 
 if __name__ == "__main__":

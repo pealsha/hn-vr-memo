@@ -11,10 +11,10 @@ public sealed class TestOutput
     [AssemblyInitialize]
     public static void Initialize(TestContext context)
     {
-        var directory = Environment.GetEnvironmentVariable("HNMEMO_TEST_OUTPUT");
+        var directory = Environment.GetEnvironmentVariable("HNVRMEMO_TEST_OUTPUT");
         if (string.IsNullOrWhiteSpace(directory))
         {
-            s_temporaryDirectory = Path.Combine(Path.GetTempPath(), "HnMemo-tests-" + Guid.NewGuid().ToString("N"));
+            s_temporaryDirectory = Path.Combine(Path.GetTempPath(), "HnVRMemo-tests-" + Guid.NewGuid().ToString("N"));
             directory = s_temporaryDirectory;
         }
         else

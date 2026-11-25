@@ -51,7 +51,7 @@ public sealed class ThumbnailTests
         painter.Image.Save(Path.Combine(root, "after-vr.png"), ImageFormat.Png);
         Check(browser.IsOpen && browser.Entries.Count == 3, "Capture must show the real VR list");
         Check(originalFiles.All(pair => File.ReadAllBytes(pair.Key).SequenceEqual(pair.Value)), "List display must leave saved files unchanged");
-        Console.WriteLine("PASS: Task 011/018 whole-page crop, sparse ink, empty/dot/edges, fine colors, aspect ratio, v1 read-only and desktop/VR list captures: " + root);
+        Console.WriteLine("PASS: whole-page crop, sparse ink, empty/dot/edges, fine colors, aspect ratio, v1 read-only and desktop/VR list captures: " + root);
     }
 
     private static void VerifyRendering(string root, MemoDocument[] documents)

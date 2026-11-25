@@ -327,7 +327,7 @@ internal sealed partial class DesktopWindow : Form
 
     internal Form CreateDetailsWindow()
     {
-        var dialog = new Form { Text = "HnMemo — エラーの詳細", Size = new(760, 440), MinimumSize = new(400, 240), StartPosition = FormStartPosition.CenterParent, Font = Font };
+        var dialog = new Form { Text = "HnVRMemo — エラーの詳細", Size = new(760, 440), MinimumSize = new(400, 240), StartPosition = FormStartPosition.CenterParent, Font = Font };
         dialog.Controls.Add(new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Both, WordWrap = false, Dock = DockStyle.Fill, Text = ErrorDetails.Replace("\n", "\r\n") });
         return dialog;
     }

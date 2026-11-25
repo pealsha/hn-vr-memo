@@ -60,7 +60,7 @@ public sealed class SmokeTests
         highlightedPen.Save("artifacts/smoke-pen-highlight.png", ImageFormat.Png);
         if (Vector3.Distance(PenPainter.FacePose(pose, 4).Position, pose.LocalToWorld(GrabScene.PenTipLocal)) > 1e-5f)
             throw new InvalidOperationException("Pen end face does not match drawing tip.");
-        _ = AppOptions.Load(Path.Combine(AppContext.BaseDirectory, "settings.example.json"));
+        _ = AppOptions.Load(null, Path.Combine(Path.GetTempPath(), $"hnvrmemo-smoke-default-{Guid.NewGuid():N}"));
         using var device = new D3DDevice(0);
         using var texture = new D3DTexture(device, BoardPainter.Width, BoardPainter.Height);
         var elapsed = Stopwatch.StartNew();

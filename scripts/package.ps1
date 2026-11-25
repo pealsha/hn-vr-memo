@@ -16,7 +16,7 @@ if (-not ($allowedRoots | Where-Object {
 })) { throw 'Package output must be under this repository''s artifacts/ or dist/.' }
 
 $buildInstaller = -not $FrameworkDependent
-$installerScript = Join-Path $repoRoot 'installer\HnMemo.iss'
+$installerScript = Join-Path $repoRoot 'installer\HnVRMemo.iss'
 if ($buildInstaller) {
     $iscc = (Get-Command iscc -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1).Source
     if (-not $iscc) {
@@ -34,17 +34,17 @@ if ($buildInstaller) {
 # Every run gets a new directory. Never replace an installation or reuse a dirty publish folder.
 $runRoot = Join-Path $outputRoot ((Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N').Substring(0, 8))
 $publishRoot = Join-Path $runRoot 'publish'
-$packageRoot = Join-Path $runRoot 'HnMemo'
+$packageRoot = Join-Path $runRoot 'HnVRMemo'
 New-Item -ItemType Directory -Path $packageRoot -Force | Out-Null
 & (Join-Path $PSScriptRoot 'publish.ps1') -OutputDirectory $publishRoot -SelfContained (-not $FrameworkDependent)
 
 # A fixed allowlist: additions to the product's dependencies must be reviewed here, too.
 $runtimeFiles = @(
-    'HnMemo.exe', 'HnMemo.dll', 'HandwriteMemo.Core.dll',
-    'HnMemo.deps.json', 'HnMemo.runtimeconfig.json',
+    'HnVRMemo.exe', 'HnVRMemo.dll', 'HandwriteMemo.Core.dll',
+    'HnVRMemo.deps.json', 'HnVRMemo.runtimeconfig.json',
     'OpenVR.dll', 'openvr_api.dll', 'SharpGen.Runtime.dll', 'SharpGen.Runtime.COM.dll',
     'Vortice.Direct3D11.dll', 'Vortice.DirectX.dll', 'Vortice.DXGI.dll', 'Vortice.Mathematics.dll',
-    'settings.example.json', 'LICENSE',
+    'LICENSE', 'THIRD-PARTY-NOTICES.md',
     'input/actions.json', 'input/app.vrmanifest', 'input/bindings_knuckles.json',
     'input/bindings_oculus_touch.json', 'input/bindings_vive_controller.json',
     'licenses/OpenVR.txt', 'licenses/FluentUI-System-Icons.txt', 'licenses/SharpGen-LICENSE.txt',
@@ -52,7 +52,7 @@ $runtimeFiles = @(
 )
 if (-not $FrameworkDependent) {
     # The SDK's dependency manifest supplies the runtime asset list, not every file in a dirty output folder.
-    $deps = Get-Content -LiteralPath (Join-Path $publishRoot 'HnMemo.deps.json') -Raw | ConvertFrom-Json
+    $deps = Get-Content -LiteralPath (Join-Path $publishRoot 'HnVRMemo.deps.json') -Raw | ConvertFrom-Json
     $target = $deps.targets.($deps.runtimeTarget.name)
     $packs = @($target.PSObject.Properties | Where-Object {
         $_.Name -match '^(?:runtimepack\.)?Microsoft\.(?:NETCore|WindowsDesktop)\.App\.Runtime\.win-x64/'
@@ -93,10 +93,8 @@ if (-not $FrameworkDependent) {
     }
 }
 $runtimeFiles = @($runtimeFiles | Sort-Object -Unique)
-$userFiles = @('THIRD-PARTY-NOTICES.md')
-foreach ($relative in ($runtimeFiles + $userFiles)) {
-    $sourceRoot = if ($runtimeFiles -contains $relative) { $publishRoot } else { Join-Path $repoRoot 'distribution' }
-    $source = Join-Path $sourceRoot $relative
+foreach ($relative in $runtimeFiles) {
+    $source = Join-Path $publishRoot $relative
     if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Required distribution file missing: $relative" }
     $destination = Join-Path $packageRoot $relative
     New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
@@ -127,7 +125,7 @@ function Assert-NoPersonalData([string]$path, [string]$displayName, [switch]$Ins
     }
 }
 
-Assert-NoPersonalData $installerScript 'installer/HnMemo.iss' -InstallerScript
+Assert-NoPersonalData $installerScript 'installer/HnVRMemo.iss' -InstallerScript
 $files = @(Get-ChildItem -LiteralPath $packageRoot -Recurse -File | Sort-Object FullName)
 $inventory = foreach ($file in $files) {
     $relative = $file.FullName.Substring($packageRoot.Length + 1).Replace('\', '/')
@@ -140,7 +138,7 @@ $inventory | ForEach-Object { Write-Output $_ }
 [xml]$props = Get-Content -LiteralPath (Join-Path $repoRoot 'Directory.Build.props')
 $version = $props.SelectSingleNode('//Version').InnerText
 if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Expected a three-part release version.' }
-$packageName = "HnMemo-$version-win-x64"
+$packageName = "HnVRMemo-$version-win-x64"
 $verification = @(
     "Version: $version"
     "Self-contained: $(-not $FrameworkDependent)"

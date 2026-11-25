@@ -1,5 +1,5 @@
 ---
-name: HnMemo
+name: HnVRMemo
 extends: personal-ui-foundation@0.3.1
 scene: personal-ui-vr@0.3.1
 colors:
@@ -43,7 +43,7 @@ metrics:
   BorderWidth: 1
 ---
 
-# HnMemo の見た目の決まり
+# HnVRMemo の見た目の決まり
 
 VRの板とPC画面は、UI 基盤 0.3.1 と VR 拡張を使います（2026-11-11 確定）。承認済み試作のライトテーマを採用し、ダークと従来色への切り替えはありません。
 
@@ -81,5 +81,5 @@ VRの板とPC画面は、UI 基盤 0.3.1 と VR 拡張を使います（2026-11-
 ## 出典
 
 - 基盤は `personal-ui-foundation@0.3.1`、VRの拡張は `personal-ui-vr@0.3.1`。
-- VRkeyboard の `BoardDesign.cs`・`DESIGN.md` の質感描画を部分再利用（MIT、Copyright (c) 2026 hinoerusi）。HnMemoの寸法へ適用し、ライトだけに限定、模様を再利用します。本リポジトリと同じ作者です。
+- VRkeyboard の `BoardDesign.cs`・`DESIGN.md` の質感描画を部分再利用（MIT、Copyright (c) 2026 hinoerusi）。HnVRMemoの寸法へ適用し、ライトだけに限定、模様を再利用します。本リポジトリと同じ作者です。
 - Microsoft公式：[PathGradientBrush](https://learn.microsoft.com/en-us/dotnet/api/system.drawing.drawing2d.pathgradientbrush?view=windowsdesktop-10.0) の楕円の中心から周囲へのグラデーションと、[Graphics.SetClip](https://learn.microsoft.com/en-us/dotnet/api/system.drawing.graphics.setclip?view=windowsdesktop-10.0) の角丸面内への切り取り。新しい描画ライブラリは使いません。

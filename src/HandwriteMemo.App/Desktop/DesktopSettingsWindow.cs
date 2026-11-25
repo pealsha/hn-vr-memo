@@ -78,7 +78,7 @@ internal sealed class DesktopSettingsWindow : Form
         _autoStart = autoStart ?? coordinator.ConfigureAutoStart;
         _openFolder = openFolder ?? (folder => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder) { UseShellExecute = true }));
         _chooseFolder = chooseFolder ?? ChooseFolder;
-        Text = "設定 — HnMemo";
+        Text = "設定 — HnVRMemo";
         Icon = UiTheme.AppIcon;
         Font = UiTheme.DesktopFont;
         BackColor = UiTheme.Background;
@@ -159,7 +159,7 @@ internal sealed class DesktopSettingsWindow : Form
         Wide(_calibrationStatus);
         rows = Group("コントローラーのボタン");
         Wide(new Label { Text = "コントローラーのボタン", AutoSize = true, Margin = Padding.Empty });
-        Wide(HintLabel("SteamVR のコントローラ設定で、HnMemo の「ノートを出す・隠す」を割り当てます。\n手首タップを使わないときも、そのボタンで操作できます。"));
+        Wide(HintLabel("SteamVR のコントローラ設定で、HnVRMemo の「ノートを出す・隠す」を割り当てます。\n手首タップを使わないときも、そのボタンで操作できます。"));
         Section("自動起動");
         rows = Group("自動起動");
         var autoRow = ActionRow(_auto, _retryAuto);
@@ -468,8 +468,8 @@ internal sealed class DesktopSettingsWindow : Form
         _pendingAutoHint.Text = error ?? (request switch
         {
             { Attempted: true } => "前回の反映を確認できません。再試行するか、予約を取り消してください。",
-            not null => "予約済み。HnMemo と SteamVR が次に接続したときに反映します。",
-            _ => available ? "" : "HnMemo と SteamVR が次に接続したときに反映します。"
+            not null => "予約済み。HnVRMemo と SteamVR が次に接続したときに反映します。",
+            _ => available ? "" : "HnVRMemo と SteamVR が次に接続したときに反映します。"
         });
     }
 

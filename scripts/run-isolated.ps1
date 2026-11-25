@@ -44,7 +44,7 @@ public static class IsolatedDesktopRunner
     private static extern bool CloseHandle(IntPtr handle);
     public static int Run(string executable, string arguments, string workingDirectory)
     {
-        string name = "HnMemoVerify-" + Guid.NewGuid().ToString("N");
+        string name = "HnVRMemoVerify-" + Guid.NewGuid().ToString("N");
         IntPtr desktop = CreateDesktop(name, IntPtr.Zero, IntPtr.Zero, 0, 0x10000000, IntPtr.Zero);
         if (desktop == IntPtr.Zero) throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateDesktop failed");
         try

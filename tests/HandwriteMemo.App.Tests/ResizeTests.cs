@@ -150,7 +150,7 @@ public sealed class ResizeTests
                 texture.Upload(image);
             }
         window.Hide();
-        Console.WriteLine("PASS: Task 012 constant-size UI/ink pixels, resized PNGs/GPU, save/reopen, VR+PC input exclusion, large page thumbnails and screenshots: " + root);
+        Console.WriteLine("PASS: constant-size UI/ink pixels, resized PNGs/GPU, save/reopen, VR+PC input exclusion, large page thumbnails and screenshots: " + root);
 
         void Capture(string name, BoardSize expected)
         {

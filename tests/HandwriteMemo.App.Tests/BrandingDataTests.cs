@@ -48,10 +48,10 @@ public sealed class BrandingDataTests
         Directory.CreateDirectory(recovery);
         File.WriteAllText(Path.Combine(recovery, "old.json"), "synthetic recovery sentinel");
         using (var log = new RunLog(logs))
-            log.Event("HnMemo compatibility check");
+            log.Event("HnVRMemo compatibility check");
         Check(logs == Path.Combine(local, "HandwriteMemo", "logs") && Directory.GetFiles(logs).Length == 1, "logs retain their location");
         Check(File.ReadAllText(Path.Combine(recovery, "old.json")) == "synthetic recovery sentinel", "recovery copies stay intact");
-        Check(!Directory.Exists(Path.Combine(local, "HnMemo")) && !Directory.Exists(Path.Combine(documents, "HnMemo")), "no split or implicit migration");
+        Check(!Directory.Exists(Path.Combine(local, "HnVRMemo")) && !Directory.Exists(Path.Combine(documents, "HnVRMemo")), "no split or implicit migration");
         Console.WriteLine("PASS: old data/settings/custom path/logs/recovery retained; synthetic roots only; no migration or format change.");
     }
 }

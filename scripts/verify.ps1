@@ -2,7 +2,7 @@
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $timer = [Diagnostics.Stopwatch]::StartNew()
 $environmentBefore = @{}
-foreach ($name in @('UseSharedCompilation', 'MSBUILDDISABLENODEREUSE', 'DOTNET_CLI_USE_MSBUILD_SERVER', 'TEMP', 'TMP', 'HNMEMO_TEST_OUTPUT')) {
+foreach ($name in @('UseSharedCompilation', 'MSBUILDDISABLENODEREUSE', 'DOTNET_CLI_USE_MSBUILD_SERVER', 'TEMP', 'TMP', 'HNVRMEMO_TEST_OUTPUT')) {
     $environmentBefore[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
 }
 $logRoot = [IO.Path]::GetFullPath((Join-Path $MemoRoot 'artifacts/verify'))
@@ -19,7 +19,7 @@ try {
     New-Item -ItemType Directory -Force $temporary | Out-Null
     $env:TEMP = $temporary
     $env:TMP = $temporary
-    $env:HNMEMO_TEST_OUTPUT = $runRoot
+    $env:HNVRMEMO_TEST_OUTPUT = $runRoot
     & node --test (Join-Path $PSScriptRoot 'analyze-wrist-log.test.mjs')
     if ($LASTEXITCODE -ne 0) { throw 'Wrist-log self-tests failed.' }
     foreach ($folder in @('src', 'tests')) {
@@ -30,11 +30,11 @@ try {
         } | ForEach-Object { $_.FullName.Substring($formatRoot.Length + 1) })
         Invoke-MemoDotnet format whitespace $folder --folder --exclude $excluded --verify-no-changes --verbosity minimal
     }
-    Invoke-MemoDotnet restore HnMemo.slnx --locked-mode --verbosity minimal -warnaserror '-warnnotaserror:NU1900'
+    Invoke-MemoDotnet restore HnVRMemo.slnx --locked-mode --verbosity minimal -warnaserror '-warnnotaserror:NU1900'
     # Recompile references too: an incremental build could conceal old warnings.
-    Invoke-MemoDotnet build HnMemo.slnx --no-restore --configuration Release --no-incremental --verbosity minimal -warnaserror '-warnnotaserror:NU1900'
+    Invoke-MemoDotnet build HnVRMemo.slnx --no-restore --configuration Release --no-incremental --verbosity minimal -warnaserror '-warnnotaserror:NU1900'
     $log = Join-Path $logRoot 'tests.log'
-    $solution = Join-Path $MemoRoot 'HnMemo.slnx'
+    $solution = Join-Path $MemoRoot 'HnVRMemo.slnx'
     Push-Location $runRoot
     $ErrorActionPreference = 'Continue'
     try {

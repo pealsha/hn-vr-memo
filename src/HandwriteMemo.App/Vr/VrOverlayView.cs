@@ -74,16 +74,16 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
     private void CreateOverlays()
     {
         const string Key = AutoStart.AppKey;
-        _resources.Board = Create(Key + ".board", "HnMemo Board");
-        _resources.ToolsDock = Create(Key + ".tools", "HnMemo Tools and Guidance");
+        _resources.Board = Create(Key + ".board", "HnVRMemo Board");
+        _resources.ToolsDock = Create(Key + ".tools", "HnVRMemo Tools and Guidance");
         Check(_overlay.SetOverlayWidthInMeters(_resources.ToolsDock, BoardSize.Default.WidthMetres), "tools width");
-        _resources.ResizeHandle = Create(Key + ".resize", "HnMemo Resize Handle");
+        _resources.ResizeHandle = Create(Key + ".resize", "HnVRMemo Resize Handle");
         Check(_overlay.SetOverlayWidthInMeters(_resources.ResizeHandle, VrOverlaySprites.ResizeVisualWidthMetres), "resize visual width");
         Check(_overlay.SetOverlaySortOrder(_resources.ResizeHandle, 1), "resize handle sort order");
         _resources.PenMarker = Create(Key + ".pen", "Handwrite Pen Tip");
         _resources.EraserMarker = Create(Key + ".eraser.tip", "Handwrite Eraser Tip");
-        _resources.WristCue = Create(Key + ".wristcue", "HnMemo Wrist Cue");
-        _resources.WristCalibration = Create(Key + ".wristcalibration", "HnMemo Wrist Calibration");
+        _resources.WristCue = Create(Key + ".wristcue", "HnVRMemo Wrist Cue");
+        _resources.WristCalibration = Create(Key + ".wristcalibration", "HnVRMemo Wrist Calibration");
         Check(_overlay.SetOverlayWidthInMeters(_resources.WristCalibration, .55f), "wrist calibration guidance width");
         Check(_overlay.SetOverlaySortOrder(_resources.WristCalibration, 3), "wrist calibration guidance sort order");
         Check(_overlay.SetOverlayWidthInMeters(_resources.WristCue, .05f), "wrist cue width");
@@ -103,7 +103,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
             Check(_overlay.SetOverlaySortOrder(_resources.EraserFaces[i], 1), "eraser body sort order");
         }
         ulong dashboard = _resources.Dashboard, thumbnail = _resources.Thumbnail;
-        var dashboardError = _overlay.CreateDashboardOverlay(Key + ".dashboard", "HnMemo", ref dashboard, ref thumbnail);
+        var dashboardError = _overlay.CreateDashboardOverlay(Key + ".dashboard", "HnVRMemo", ref dashboard, ref thumbnail);
         _resources.Dashboard = dashboard;
         _resources.Thumbnail = thumbnail;
         Check(dashboardError, "CreateDashboardOverlay");

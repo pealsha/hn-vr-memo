@@ -15,9 +15,9 @@
 
 | 目的 | 入口 |
 |---|---|
-| ソリューション全体のビルド | `dotnet build HnMemo.slnx --configuration Release -warnaserror` |
+| ソリューション全体のビルド | `dotnet build HnVRMemo.slnx --configuration Release -warnaserror` |
 | 検証（終了0で合格） | `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1` |
-| ローカル実行版 `dist/HnMemo` の更新 | `scripts/Build-App.cmd`（`Update-HnMemo.cmd` も同じ処理） |
+| ローカル実行版 `dist/HnVRMemo` の更新 | `scripts/Build-App.cmd` |
 | インストーラーの生成 | `scripts/package.ps1`（[配布の準備](DISTRIBUTION.md)） |
 | 見た目の撮影と前後比較 | `scripts/run-isolated.ps1` と `scripts/capture-foundation.ps1`（下の「見た目の撮影と前後比較」） |
 | 手首タップのログの集計 | `node scripts/analyze-wrist-log.mjs`（下の「手首タップの調査」） |
@@ -29,7 +29,7 @@
 
 1. スクリプトのテストを実行します。対象は手首タップのログ集計です。
 2. `dotnet format whitespace --verify-no-changes` で、`.editorconfig` に沿った整形を確認します。整形の差分があると失敗し、ファイルの書き換えは行いません。
-3. 固定した依存を復元し、`HnMemo.slnx` を Release 構成で全件ビルドします。命名を含む警告はエラーにします。
+3. 固定した依存を復元し、`HnVRMemo.slnx` を Release 構成で全件ビルドします。命名を含む警告はエラーにします。
 4. `dotnet test` で Core・Storage・App の通常テストを実行します。各 TRX を読み、合格件数が下限（Core 74、Storage 32、App 61）に達し、全件が実行・合格していることを確認します。
 
 テストの作業フォルダと `TEMP`・`TMP` は `artifacts/verify/run-…/` の配下に作ります。合格後は一時フォルダを削除し、`artifacts/verify/tests.log` とプロジェクトごとの `.trx` を残します。失敗時はエラー調査用に一時フォルダを残し、その場所を表示します。
@@ -37,18 +37,18 @@
 
 ### ローカル実行版の更新
 
-- 開発用の `Start-HnMemo.cmd` は `dist/HnMemo/HnMemo.exe` を起動します。実行ファイルがない場合は `scripts/Build-App.cmd` で発行してから起動します。手動起動では PC 画面が開きます。`Desktop-HnMemo.cmd` は PC 画面の表示を明示する `--desktop` を渡します。
-- `Update-HnMemo.cmd` と `Enable-Autostart.cmd` は毎回発行します。Release 構成で一時フォルダに発行し、成功した時点で `dist/HnMemo` を差し替えます。更新の前に、通知領域の「終了」でHnMemoを閉じます。
+- `scripts/Build-App.cmd` は Release 構成で一時フォルダに発行し、成功した時点で `dist/HnVRMemo` を差し替えます。更新の前に、通知領域の「終了」で HnVRMemo を閉じます。
+- 実行は `dist/HnVRMemo/HnVRMemo.exe`（手動起動では PC 画面が開きます。`--desktop` で PC 画面表示を明示、`--background` で非表示常駐）で行います。
 
 ## 構成
 
-- `HnMemo.slnx` にCore・App・OpenVRと、Core・Storage・Appのテストを登録しています。
+- `HnVRMemo.slnx` にCore・App・OpenVRと、Core・Storage・Appのテストを登録しています。
 - `src/HandwriteMemo.Core`：寸法の基準（`BoardMetrics`）、掴みと投影筆記、道具、手首タップの判定、保存形式とファイルの置き換え、ページ一覧とゴミ箱。VRやWinFormsに依存しません。
 - `src/HandwriteMemo.App`：起動（`Program.cs`）、設定（`AppOptions.cs`）、保存先の場所（`AppDataPaths.cs`）と、下の表のフォルダ。名前空間は全て `HandwriteMemo.App` です。
 - `tests/HandwriteMemo.Core.Tests`・`Storage.Tests`・`App.Tests`：それぞれ MSTest 3.8.3 のテストライブラリです。App の WinForms テストは STA（Windows UI 用のスレッド設定）で動きます。
 - `input/`：SteamVRに登録するアプリ定義、操作の定義、機種ごとの既定の割り当て。
 - `vendor/openvr`：無改変のValve公式C#バインディングとDLL。`vendor/fluentui-system-icons`：ツールバーのアイコンの元のSVG。
-- `dist/HnMemo`：ローカル実行用の発行先。Gitの対象外です。
+- `dist/HnVRMemo`：ローカル実行用の発行先。Gitの対象外です。
 
 | App内のフォルダ | 担当 |
 |---|---|
@@ -73,15 +73,15 @@
 ソリューションをビルドして通常テストを実行します。
 
 ```powershell
-dotnet test HnMemo.slnx --filter "TestCategory!=Manual"
+dotnet test HnVRMemo.slnx --filter "TestCategory!=Manual"
 ```
 
 既に Release 構成でビルド済みの場合は、`--no-build --configuration Release` を追加してビルドを省略できます。`--filter "TestCategory!=Manual"` は、撮影用の手動テストを除外します。
 
 ```powershell
-dotnet test HnMemo.slnx --list-tests
-dotnet test HnMemo.slnx --filter "FullyQualifiedName~SelectionModeTests"
-dotnet test HnMemo.slnx --configuration Release --filter "FullyQualifiedName~PerformanceTests"
+dotnet test HnVRMemo.slnx --list-tests
+dotnet test HnVRMemo.slnx --filter "FullyQualifiedName~SelectionModeTests"
+dotnet test HnVRMemo.slnx --configuration Release --filter "FullyQualifiedName~PerformanceTests"
 ```
 
 - `--list-tests` は、検出したテストの名前を表示します。`FullyQualifiedName~…` は、クラスとメソッドを含むテスト名の部分一致です。描画と GPU 転送の計測は `PerformanceTests` で実行します。
@@ -98,10 +98,10 @@ dotnet test HnMemo.slnx --configuration Release --filter "FullyQualifiedName~Per
 - **VRの資源**：接続ごとのハンドル・画像・テクスチャは `VrSessionResources` が持ちます。解放は作った順の逆で、途中で失敗しても残りを解放します。
 - **手首タップ**：判定は `Core/WristTapGesture.cs`、板との接続は `Vr/VrWristInput.cs`、位置合わせは `Core/WristCalibration.cs` です。
 - **起動**：同じWindowsセッションでの二重起動はMutexで防ぎ、2つ目の起動は名前付きイベントで既存の画面を開きます。`--desktop` はPC画面を開き、`--background`（SteamVRの自動起動で使う）は画面を出しません。SteamVRの起動は約3秒ごとに調べて、起動していれば接続します。
-- **自動起動**：app keyは `handwrite-memo.v1` です。`--autostart enable|disable|status` で登録・解除・状態の表示をします。SteamVRは日本語などを含むパスのアプリを起動できません。
+- **自動起動**：app keyは `handwrite-memo.v1` です。`--autostart enable|disable|status` で登録・解除・状態を表示します。インストーラーは `--autostart enable --defer` を使います。即時登録できたら `PendingAutoStart` を消し、SteamVR が停止中か登録に失敗したらオンの予約を保存します。非 ASCII パスでは登録と予約を省きます。設定の読み書きに失敗した場合はログに記録し、終了コードは 0 を返します。`--config PATH` で予約の読み書き先を指定できます。
 - **ペンタブ**：`WM_POINTER` のペン入力を扱います。筆圧と傾きは使いません。
 - **アイコン**：ツールバーのアイコンは `vendor/fluentui-system-icons/` のSVGを、`generate-fluent-icons.py` でC#の図形に変換したものです。生成したC#を含むので、通常のビルドにPythonは要りません。出典とライセンスは `THIRD-PARTY-NOTICES.md` にあります。
-- **ログと設定**：ログは `%LOCALAPPDATA%\HandwriteMemo\logs`、設定は `%LOCALAPPDATA%\HandwriteMemo\settings.json` です。`dotnet dist/HnMemo/HnMemo.dll` で起動すると標準出力も読めます。
+- **ログと設定**：ログは `%LOCALAPPDATA%\HandwriteMemo\logs`、設定は `%LOCALAPPDATA%\HandwriteMemo\settings.json` です。`dotnet dist/HnVRMemo/HnVRMemo.dll` で起動すると標準出力も読めます。
 
 ## 手首タップの調査
 

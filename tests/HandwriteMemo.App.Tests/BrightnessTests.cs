@@ -130,7 +130,7 @@ public sealed class BrightnessTests
         CheckUnchangedContent();
         s_events.Clear();
         s_colors.Clear();
-        Console.WriteLine("PASS: Task 024 legacy/validated brightness, actual dashboard dispatch, RGB calls on every overlay, settings lock failure/retry, PNG and PC pixel invariance.");
+        Console.WriteLine("PASS: legacy/validated brightness, actual dashboard dispatch, RGB calls on every overlay, settings lock failure/retry, PNG and PC pixel invariance.");
 
         void CheckColors(float value)
         {

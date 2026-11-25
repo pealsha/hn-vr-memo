@@ -166,7 +166,7 @@ internal sealed class SteamVrInput : IDisposable
         {
             _log.Event($"{hand} input: {status}");
             if (!buttons)
-                _log.Event("Input paused. Check controllers and SteamVR bindings for HnMemo (Grab / Draw).");
+                _log.Event("Input paused. Check controllers and SteamVR bindings for HnVRMemo (Grab / Draw).");
             if (!poseValid)
                 _log.Event("Hand pose unavailable. Bind Hand grip pose to /pose/grip for both hands; raw controller pose is not used as a fallback.");
             _previousStatus[hand] = status;

@@ -13,7 +13,7 @@ internal static class Program
         {
             string? config = null, auto = null;
             double? duration = null;
-            bool show = false, desktop = false, background = false;
+            bool show = false, desktop = false, background = false, deferAutoStart = false;
             for (int i = 0; i < args.Length; i++)
             {
                 switch (args[i])
@@ -27,6 +27,9 @@ internal static class Program
                     case "--autostart":
                         SetMode("autostart");
                         auto = Value();
+                        break;
+                    case "--defer":
+                        deferAutoStart = true;
                         break;
                     case "--config":
                         config = Value();
@@ -50,6 +53,12 @@ internal static class Program
                 }
                 string Value() => ++i < args.Length ? args[i] : throw new ArgumentException("Missing option value.");
             }
+            if (deferAutoStart)
+            {
+                if (mode != "autostart" || auto != "enable")
+                    throw new ArgumentException("--defer requires --autostart enable.");
+                return AutoStart.ConfigureDeferred(config);
+            }
             if (mode == "autostart")
                 return AutoStart.Configure(auto!);
             if (mode == "diagnose")
@@ -71,7 +80,7 @@ internal static class Program
         {
             Console.Error.WriteLine($"ERROR: {e.GetType().Name}: {e.Message}");
             if (mode == "vr")
-                MessageBox.Show(e.Message, "HnMemo — error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(e.Message, "HnVRMemo — error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
     }
@@ -79,13 +88,14 @@ internal static class Program
     internal static void InitializeApplication() => ApplicationConfiguration.Initialize();
 
     private static void PrintHelp() => Console.WriteLine($"""
-        HnMemo {Application.ProductVersion} (Windows x64 / .NET 10)
+        HnVRMemo {Application.ProductVersion} (Windows x64 / .NET 10)
         No options              Open the desktop window and connect to SteamVR when available.
         --desktop               Open the desktop window even with --background.
         --background            SteamVR auto-launch: keep desktop hidden until requested.
         --config PATH           Load settings JSON (default: LocalAppData/HandwriteMemo/settings.json).
         --show                  Show board immediately; valid HMD tracking required.
         --autostart enable      Register this installation to launch with SteamVR.
+        --autostart enable --defer  Register now or save a request for the next SteamVR connection.
         --autostart disable     Disable and unregister SteamVR autostart.
         --autostart status      Print current SteamVR autostart setting.
         --diagnose              Read OpenVR installation/HMD availability.

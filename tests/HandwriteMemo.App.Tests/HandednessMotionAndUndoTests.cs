@@ -16,7 +16,7 @@ public sealed class HandednessMotionAndUndoTests
         CheckAttachment();
         CheckMirroredResize();
         CheckTriggerUndo(root);
-        Console.WriteLine("PASS: Task 023 handedness/settings, mirrored resize, raw-device attachment and double-trigger undo gating");
+        Console.WriteLine("PASS: handedness/settings, mirrored resize, raw-device attachment and double-trigger undo gating");
     }
 
     private static void CheckSettings(string root)

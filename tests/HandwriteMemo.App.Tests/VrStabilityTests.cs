@@ -11,7 +11,7 @@ public sealed class VrStabilityTests
     {
         CheckHover();
         CheckNavigation();
-        Console.WriteLine("PASS: Task 022 hover debounce, unchanged 10cm pickup, page poses and held tools across VR/PC navigation");
+        Console.WriteLine("PASS: hover debounce, unchanged 10cm pickup, page poses and held tools across VR/PC navigation");
     }
 
     private static void CheckHover()

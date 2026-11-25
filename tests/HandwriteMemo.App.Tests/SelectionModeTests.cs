@@ -206,7 +206,7 @@ public sealed class SelectionModeTests
         ClickRow(list, openIndex);
         Check(page.Id == documents[1].Id && !window.Canvas.ReadOnly, "Normal click still opens a single page after exit");
         window.Hide();
-        Console.WriteLine("PASS: Task 029 selection mode, native row toggle, counts/all/clear, exit/tab, batch pin/move/undo/restore/delete, partial failures and layouts: " + root);
+        Console.WriteLine("PASS: selection mode, native row toggle, counts/all/clear, exit/tab, batch pin/move/undo/restore/delete, partial failures and layouts: " + root);
     }
 
     private static void CheckSelectionLayout(DesktopWindow window)

@@ -33,7 +33,7 @@
 - Unmodified source SVGs and license: `vendor/fluentui-system-icons/`; see `SOURCE.md` there.
 - Used icons (24 regular): `pen`, `ink_stroke`, `eraser`, `arrow_undo`, `arrow_redo`.
 - Project modification: `src/HandwriteMemo.App/Ui/ToolbarGlyph.cs` overlays the lower-right of `ink_stroke` with a tile-background circle and a foreground cross to identify whole-stroke erase. The circle and cross are project-drawn geometry, not Fluent assets. Their colors follow the tile's normal, selected, hover, pressed and disabled states. `eraser` identifies partial erase. Eraser algorithms and size settings are unchanged.
-- `scripts/generate-fluent-icons.py` converts the exact source SVG geometry to GDI+ `GraphicsPath` data in `src/HandwriteMemo.App/Ui/FluentToolbarIcons.Generated.cs`; the cross overlay is added at paint time. All geometry is drawn at the current DPI scale; no new package dependency. The unused `eraser_segment` and `eraser_small` SVGs remain as source candidates but are excluded from generated code.
+- `scripts/generate-fluent-icons.py` converts the exact source SVG geometry to GDI+ `GraphicsPath` data in `src/HandwriteMemo.App/Ui/FluentToolbarIcons.Generated.cs`; the cross overlay is added at paint time. All geometry is drawn at the current DPI scale; no new package dependency.
 - MIT license; full text below and in `vendor/fluentui-system-icons/LICENSE`, copied to the app output and publish directory as `licenses/FluentUI-System-Icons.txt`.
 
 ```text

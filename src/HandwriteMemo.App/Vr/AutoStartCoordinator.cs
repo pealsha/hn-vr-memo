@@ -17,7 +17,7 @@ internal sealed class AutoStartCoordinator(AppSettingsService settings, Action<s
         if (_locationNotice.Take(applications, AutoStart.ExecutablePath, AutoStart.ManifestPath) is { } notice)
         {
             log(notice);
-            Notification?.Invoke(new("HnMemo — 自動起動の置き場所", notice, NotificationIcon.Warning));
+            Notification?.Invoke(new("HnVRMemo — 自動起動の置き場所", notice, NotificationIcon.Warning));
         }
     }
 

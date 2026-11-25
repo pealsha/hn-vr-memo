@@ -179,7 +179,7 @@ public sealed class WristButtonAppTests
         CheckHapticManifest();
         settings.Close();
         File.WriteAllText(Path.Combine(root, "synthetic-results.txt"), "PASS: legacy config, settings/dashboard click persistence and failure recovery, both-hand gesture gates and held objects, optional native input and real board toggles, unbound manifests.\nNo SteamVR session, registration, user settings, or user memo files accessed.\n");
-        Console.WriteLine("PASS: Task 034 wrist settings/dashboard/images, synthetic gesture integration and optional SteamVR input/board toggle (no SteamVR session).");
+        Console.WriteLine("PASS: wrist settings/dashboard/images, synthetic gesture integration and optional SteamVR input/board toggle (no SteamVR session).");
     }
 
     private sealed class WristSequence(VrOverlayHost app, AppSettingsService preferences, HandSide dominant)
@@ -283,7 +283,7 @@ public sealed class WristButtonAppTests
                         "cue near the head or parallel to head-up remains finite");
                 }
             }
-        Console.WriteLine("PASS: Task 034 synthetic wrist poses open and close the actual board, both hands and both activation modes.");
+        Console.WriteLine("PASS: synthetic wrist poses open and close the actual board, both hands and both activation modes.");
     }
 
     private static readonly List<(ulong Handle, float Duration, float Frequency, float Amplitude, ulong Source)> s_haptics = [];

@@ -10,7 +10,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'A .NET 10 SDK compatible with global.json is required on PATH.' }
 } finally { Pop-Location }
 $MemoProject = Join-Path $MemoRoot 'src\HandwriteMemo.App\HandwriteMemo.App.csproj'
-$MemoDll = Join-Path $MemoRoot 'src\HandwriteMemo.App\bin\Release\net10.0-windows\HnMemo.dll'
+$MemoDll = Join-Path $MemoRoot 'src\HandwriteMemo.App\bin\Release\net10.0-windows\HnVRMemo.dll'
 function Invoke-MemoDotnet {
     & $MemoDotnet @args
     if ($LASTEXITCODE -ne 0) { throw "dotnet failed (exit $LASTEXITCODE)." }

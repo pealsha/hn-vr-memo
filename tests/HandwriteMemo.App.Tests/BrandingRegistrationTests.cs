@@ -13,15 +13,15 @@ public sealed class BrandingRegistrationTests
     public void UpdateExisting()
     {
         string root = Path.GetFullPath(Path.Combine("artifacts", "task-040", "registration-" + Guid.NewGuid().ToString("N")));
-        string exe = Path.Combine(root, "HnMemo.exe"), manifest = Path.Combine(root, "input", "app.vrmanifest");
+        string exe = Path.Combine(root, "HnVRMemo.exe"), manifest = Path.Combine(root, "input", "app.vrmanifest");
         Directory.CreateDirectory(Path.GetDirectoryName(manifest)!);
         File.WriteAllText(exe, "Synthetic placeholder; never executed.");
         File.Copy(AutoStart.ManifestPath, manifest);
         using var json = JsonDocument.Parse(File.ReadAllText(manifest));
         var app = json.RootElement.GetProperty("applications")[0];
         Check(app.GetProperty("app_key").GetString() == "handwrite-memo.v1" &&
-            app.GetProperty("strings").GetProperty("en_us").GetProperty("name").GetString() == "HnMemo", "manifest identity and display name");
-        Check(Path.GetFileName(AutoStart.ExecutablePath) == "HnMemo.exe", "production utility points to new executable");
+            app.GetProperty("strings").GetProperty("en_us").GetProperty("name").GetString() == "HnVRMemo", "manifest identity and display name");
+        Check(Path.GetFileName(AutoStart.ExecutablePath) == "HnVRMemo.exe", "production utility points to new executable");
         string oldManifest = Path.Combine(root, "old installation", "input", "app.vrmanifest");
         Directory.CreateDirectory(Path.GetDirectoryName(oldManifest)!);
         File.Copy(manifest, oldManifest);
@@ -126,8 +126,8 @@ public sealed class BrandingRegistrationTests
         Check(connected.Writes == 2, "a reconnect does not replay an acknowledged reservation");
 
         SettingsToggle(root, exe, manifest, missingBinary);
-        Console.WriteLine("PASS: existing SteamVR app key reloads HnMemo manifest/exe on explicit Enable; repeat/status/failure tested with an injected API only.");
-        Console.WriteLine("PASS: Task 041 old/missing/same-location registration, strict mock, log, failure/retry and 100 seeded operations; no real SteamVR registration changed.");
+        Console.WriteLine("PASS: existing SteamVR app key reloads HnVRMemo manifest/exe on explicit Enable; repeat/status/failure tested with an injected API only.");
+        Console.WriteLine("PASS: old/missing/same-location registration, strict mock, log, failure/retry and 100 seeded operations; no real SteamVR registration changed.");
     }
 
     private static void SettingsToggle(string root, string exe, string manifest, string oldBinary)

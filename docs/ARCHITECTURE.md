@@ -1,6 +1,6 @@
-# HnMemo アーキテクチャ
+# HnVRMemo アーキテクチャ
 
-HnMemo は WinForms と SteamVR オーバーレイから同じメモを編集する Windows アプリです。
+HnVRMemo は WinForms と SteamVR オーバーレイから同じメモを編集する Windows アプリです。
 
 ## 全体構成と依存の向き
 

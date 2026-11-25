@@ -78,7 +78,7 @@ internal static class VrOverlaySprites
             g.DrawString(label, i < 6 ? title : choiceText,
                 selected ? onAccent : i == 2 ? errorInk : i == 10 && calibrationActive ? secondary : ink, rect, centered);
         }
-        g.DrawString("HnMemo  ·  " + (boardVisible ? "ノートは表示中" : "ノートは非表示"), title, ink, 20, 8);
+        g.DrawString("HnVRMemo  ·  " + (boardVisible ? "ノートは表示中" : "ノートは非表示"), title, ink, 20, 8);
         bool leftHanded = handedness == HandSide.Left;
         string hand = leftHanded ? "右手" : "左手";
         string gesture = gestureMode == ToggleGestureMode.WristButton

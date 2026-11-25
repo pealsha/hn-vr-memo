@@ -20,7 +20,7 @@ public sealed class ContextUndoSequenceTests
         {
             File.WriteAllLines(Path.Combine(root, "random-sequences.log"), trace);
         }
-        Console.WriteLine("PASS: Task 030 random input sequences: 3 fixed seeds x 60 actions; exact catalog IDs, shared page, ink history and contextual undo.");
+        Console.WriteLine("PASS: random input sequences: 3 fixed seeds x 60 actions; exact catalog IDs, shared page, ink history and contextual undo.");
     }
 
     private static void RunSequence(string root, int seed, List<string> trace)

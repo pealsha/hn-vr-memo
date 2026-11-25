@@ -16,7 +16,7 @@ internal sealed partial class DesktopWindow
         _pages = _catalog.List;
         _actions = new(this, page, seconds, _catalog, _trash, _nameEditor, _toolTips,
             ReloadCatalog, UpdateState, () => _listTab.Checked = true, () => SetSelectionMode(false));
-        Text = "HnMemo";
+        Text = "HnVRMemo";
         Icon = UiTheme.AppIcon;
         Font = UiTheme.DesktopFont;
         BackColor = UiTheme.Background;
