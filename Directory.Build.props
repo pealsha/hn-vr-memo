@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'HandwriteMemo.App' Or '$(MSBuildProjectName)' == 'HandwriteMemo.Core' Or '$(MSBuildProjectName)' == 'HandwriteMemo.App.Tests' Or '$(MSBuildProjectName)' == 'HandwriteMemo.Core.Tests' Or '$(MSBuildProjectName)' == 'HandwriteMemo.Storage.Tests'">
-    <Version>0.9.0</Version>
+    <Version>0.9.9</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- SDK analyzers only; keep default quality rules and warnings as warnings. -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
