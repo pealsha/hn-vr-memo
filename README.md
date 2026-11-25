@@ -1,7 +1,5 @@
 # HnMemo
 
-[![Verify](https://github.com/pealsha/hn-vr-memo/actions/workflows/verify.yml/badge.svg)](https://github.com/pealsha/hn-vr-memo/actions/workflows/verify.yml)
-
 SteamVR の空間にノートを出して手書きできる、Windows 用の手書きメモ帳です。  
 VRChat をプレイしながら思いついた数式・単語・アイデアを数秒で書き留め、あとから VR 内でも PC 画面でも見返したり書き足したりできます。自分用に作ったので、使いたい方がいれば使ってください。
 
