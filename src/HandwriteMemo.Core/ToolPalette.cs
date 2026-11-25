@@ -22,13 +22,13 @@ public static class ToolPalette
     public static IReadOnlyList<float> Widths { get; } = Array.AsReadOnly(new[] { .00075f, MemoStroke.DefaultWidthMetres, .003f });
 
     public const int DockWidthPixels = BoardMetrics.ReferenceWidthPixels, DockHeightPixels = 304, DockGapPixels = 8;
-    private static readonly int[] s_leftPixels = [8, 88, 168, 248, 336, 416, 496, 592, 804];
+    private static readonly int[] s_leftPixels = [8, 88, 168, 248, 344, 424, 504, 600, 812];
 
     public static (float Left, float Top, float Width, float Height) Bounds(int index)
     {
         if (index < 0 || index >= ButtonCount)
             throw new ArgumentOutOfRangeException(nameof(index));
-        int width = index < 7 ? 72 : index == 7 ? 200 : 212;
+        int width = index < Colors.Count + Widths.Count ? 72 : 204;
         return (s_leftPixels[index] / (float)BoardMetrics.ReferenceWidthPixels, (120 - DockHeightPixels - DockGapPixels) / (float)BoardMetrics.ReferenceHeightPixels,
             width / (float)BoardMetrics.ReferenceWidthPixels, 64 / (float)BoardMetrics.ReferenceHeightPixels);
     }

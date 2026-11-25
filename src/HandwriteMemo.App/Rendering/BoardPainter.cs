@@ -64,7 +64,6 @@ internal sealed partial class BoardPainter : IDisposable
     {
         // Reference pixels keep the physical card size aligned with BoardControls.ReferenceUv when the board grows.
         using var textBrush = new SolidBrush(VrTheme.Text);
-        using var secondaryBrush = new SolidBrush(VrTheme.Secondary);
         if (_previewRevision != browser.Revision || _previewScreen != browser.Screen)
         {
             ClearPreviews();
@@ -93,7 +92,7 @@ internal sealed partial class BoardPainter : IDisposable
             using var cardInk = new SolidBrush(current ? VrTheme.OnAccent : VrTheme.Text);
             using var cardSecondary = new SolidBrush(current ? VrTheme.OnAccent : VrTheme.Secondary);
             using var actionInk = new SolidBrush(current ? VrTheme.OnAccent : VrTheme.AccentInk);
-            Tile(g, rect, current, VrTheme.Surface, VrTheme.Border);
+            VrTheme.Tile(g, rect, current, VrTheme.Surface, VrTheme.Border);
             if (frame.CursorUv is { } uv && BoardControls.CardAt(uv, page.BoardSize) == row)
                 DrawHover(g, rect);
             float previewHeight = rect.Height - 140;
@@ -117,16 +116,16 @@ internal sealed partial class BoardPainter : IDisposable
         }
         var previous = new RectangleF(Width * .02f, Height * .87f, Width * .22f, Height * .11f);
         var next = new RectangleF(Width * .76f, Height * .87f, Width * .22f, Height * .11f);
-        DrawListButton(previous, "‹ 前", browser.CanNavigate(-1), BoardCommand.PreviousPage);
-        DrawListButton(next, "次 ›", browser.CanNavigate(1), BoardCommand.NextPage);
+        DrawListButton(previous, "前", browser.CanNavigate(-1), BoardCommand.PreviousPage, ToolbarIcon.PreviousPage);
+        DrawListButton(next, "次", browser.CanNavigate(1), BoardCommand.NextPage, ToolbarIcon.NextPage);
         g.DrawString($"{browser.Screen + 1} / {browser.ScreenCount}   ·   {browser.Entries.Count} ページ", _listFont, textBrush,
             new RectangleF(Width * .25f, Height * .87f, Width * .5f, Height * .11f), centered);
-        void DrawListButton(RectangleF rect, string label, bool enabled, BoardCommand command)
+        void DrawListButton(RectangleF rect, string label, bool enabled, BoardCommand command, ToolbarIcon icon)
         {
             VrTheme.Tile(g, rect, false, VrTheme.Surface, VrTheme.Border, enabled);
             if (enabled && frame.CursorUv is { } uv && BoardControls.HitTest(uv, true, page.BoardSize) == command)
                 DrawHover(g, rect);
-            g.DrawString(label, _buttonFont, enabled ? textBrush : secondaryBrush, rect, centered);
+            DrawButtonContent(g, rect, enabled ? VrTheme.Text : VrTheme.Secondary, VrTheme.Surface, label, icon);
         }
     }
 
@@ -140,7 +139,7 @@ internal sealed partial class BoardPainter : IDisposable
     private static void DrawHover(Graphics g, RectangleF rect)
     {
         using var border = new Pen(VrTheme.Accent, 2);
-        using var path = Rounded(rect);
+        using var path = UiTheme.Rounded(rect, VrTheme.Radius);
         g.DrawPath(border, path);
     }
 

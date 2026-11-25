@@ -19,13 +19,6 @@ internal sealed partial class BoardPainter
         (BoardSize.Default.WidthMetres - size.WidthMetres) / 2,
         size.HeightMetres / 2 + (ToolPalette.DockHeightPixels / 2f + ToolPalette.DockGapPixels) / MemoRenderer.PixelsPerMetre, 0)), board.Rotation);
 
-    private static GraphicsPath Rounded(RectangleF r) => UiTheme.Rounded(r, VrTheme.Radius);
-
-    private static void Tile(Graphics g, RectangleF r, bool selected, Color background, Color border)
-    {
-        VrTheme.Tile(g, r, selected, background, border);
-    }
-
     private void DrawDock(HandwriteEngine engine, FrameResult frame, VrInputStatus status, MemoSession? page, VrPageBrowser? vrPages, bool list)
     {
         var notice = NoticeForDock(status, page, list ? vrPages : null);
@@ -81,48 +74,45 @@ internal sealed partial class BoardPainter
                 g.DrawString(guide, _buttonFont, guideInk, new RectangleF(12, 8, Width - 24, 74));
         }
         DrawCommands(g, engine, frame, page, vrPages, list);
-        if (list)
-        {
-            DrawDockCursor(g, frame);
-            return;
-        }
-        // The tile positions and hit regions stay fixed; unused caption space is transparent.
+        if (!list)
+            DrawPalette(g, engine, frame);
+        DrawDockCursor(g, frame);
+    }
+
+    private void DrawPalette(Graphics g, HandwriteEngine engine, FrameResult frame)
+    {
         VrTheme.PlateFill(g, new(0, 112, Width, 80));
-        using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+        int colorCount = ToolPalette.Colors.Count;
+        int swatchCount = colorCount + ToolPalette.Widths.Count;
         int hover = frame.CursorUv is { } uv ? ToolPalette.HitTest(uv, engine.BoardSize) : -1;
         for (int i = 0; i < ToolPalette.ButtonCount; i++)
         {
-            var r = ToolPalette.Bounds(i);
-            var rect = new RectangleF(r.Left * Width, r.Top * Height + ToolPalette.DockHeightPixels + ToolPalette.DockGapPixels, r.Width * Width, r.Height * Height);
+            var rect = DockBounds(ToolPalette.Bounds(i));
+            if (i == colorCount || i == swatchCount)
+                DrawDockSeparator(g, DockBounds(ToolPalette.Bounds(i - 1)).Right, rect);
             bool selected = engine.IsPaletteSelected(i);
-            var fill = selected ? VrTheme.Accent : VrTheme.Surface;
-            Tile(g, rect, selected, fill, VrTheme.Border);
-            if (i < 7)
+            if (i < swatchCount)
             {
-                var inset = RectangleF.Inflate(rect, -4, -4);
-                VrTheme.Tile(g, inset, false, VrTheme.Surface, VrTheme.Control);
-            }
-            if (hover == i)
-            {
-                using var pen = new Pen(VrTheme.AccentInk, 3);
-                using var outline = Rounded(RectangleF.Inflate(rect, 3, 3));
-                g.DrawPath(pen, outline);
-            }
-            if (i < 7)
-            {
-                float diameter = i < 4 ? 28 : ToolPalette.Widths[i - 4] / ToolPalette.Widths[2] * 28;
-                using var ink = new SolidBrush(i < 4 ? ColorTranslator.FromHtml(ToolPalette.Colors[i]) : VrTheme.Text);
+                VrTheme.SwatchTile(g, rect, selected, hover == i);
+                bool colorSwatch = i < colorCount;
+                float diameter = colorSwatch ? 28 : ToolPalette.Widths[i - colorCount] / ToolPalette.Widths[^1] * 28;
+                using var ink = new SolidBrush(colorSwatch ? ColorTranslator.FromHtml(ToolPalette.Colors[i]) : VrTheme.Text);
                 g.FillEllipse(ink, rect.X + (rect.Width - diameter) / 2, rect.Y + (rect.Height - diameter) / 2, diameter, diameter);
             }
             else
             {
-                var color = selected ? VrTheme.OnAccent : VrTheme.Text;
-                using var labelInk = new SolidBrush(color);
-                ToolbarGlyph.Draw(g, i == 7 ? ToolbarIcon.EraseStroke : ToolbarIcon.ErasePart, new(rect.X + 12, rect.Y + (rect.Height - 32) / 2, 32, 32), color, fill);
-                g.DrawString(i == 7 ? "線ごと消す" : "部分消し", _smallFont, labelInk, new RectangleF(rect.X + 50, rect.Y, rect.Width - 54, rect.Height), centered);
+                VrTheme.Tile(g, rect, selected, VrTheme.Surface, VrTheme.Border);
+                if (hover == i)
+                {
+                    using var pen = new Pen(VrTheme.AccentInk, 3);
+                    using var outline = UiTheme.Rounded(RectangleF.Inflate(rect, 3, 3), VrTheme.Radius);
+                    g.DrawPath(pen, outline);
+                }
+                bool stroke = i == swatchCount;
+                DrawButtonContent(g, rect, selected ? VrTheme.OnAccent : VrTheme.Text, selected ? VrTheme.Accent : VrTheme.Surface,
+                    stroke ? "線ごと消す" : "部分消し", stroke ? ToolbarIcon.EraseStroke : ToolbarIcon.ErasePart);
             }
         }
-        DrawDockCursor(g, frame);
     }
 
     private void DrawDockCursor(Graphics g, FrameResult frame)
@@ -138,13 +128,15 @@ internal sealed partial class BoardPainter
     private void DrawCommands(Graphics g, HandwriteEngine engine, FrameResult frame, MemoSession? page, VrPageBrowser? vrPages, bool list)
     {
         VrTheme.PlateFill(g, new(0, BoardControls.DockTopPixels - 8, Width, 88));
-        using var centered = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         var buttons = list ? BoardControls.ListButtons : BoardControls.EditorButtons;
+        var hover = frame.CursorUv is { } target ? BoardControls.HitTest(target, list, engine.BoardSize) : null;
         for (int i = 0; i < buttons.Count; i++)
         {
-            var bounds = BoardControls.ButtonBounds(i, list);
-            var rect = new RectangleF(bounds.Left * Width, bounds.Top * Height + ToolPalette.DockHeightPixels + ToolPalette.DockGapPixels, bounds.Width * Width, bounds.Height * Height);
-            bool enabled = buttons[i] switch
+            var command = buttons[i];
+            var rect = DockBounds(BoardControls.ButtonBounds(i, list));
+            if (!list && command is BoardCommand.PageList or BoardCommand.TogglePin or BoardCommand.Close)
+                DrawDockSeparator(g, DockBounds(BoardControls.ButtonBounds(i - 1, list)).Right, rect);
+            bool enabled = command switch
             {
                 BoardCommand.Undo => engine.CanUndo && page?.IsBusy != true,
                 BoardCommand.Redo => engine.CanRedo && page?.IsBusy != true,
@@ -152,33 +144,63 @@ internal sealed partial class BoardPainter
                 BoardCommand.NextPage => vrPages?.CanNavigate(1) ?? false,
                 _ => true,
             };
-            var label = buttons[i] switch
+            bool pin = command == BoardCommand.TogglePin;
+            bool selected = pin && page?.IsPinned == true;
+            (string Label, ToolbarIcon? Icon) content = command switch
             {
-                BoardCommand.Undo or BoardCommand.Redo => "",
-                BoardCommand.NewPage => "新しい\nページ",
-                BoardCommand.PageList => "一覧",
-                BoardCommand.PreviousPage => "前",
-                BoardCommand.NextPage => "次",
-                BoardCommand.TogglePin => page?.IsPinned == true ? "ピン解除" : "ピン留め",
-                BoardCommand.BackToPage => "ページに戻る",
-                BoardCommand.RefreshList => "更新",
-                _ => "閉じる",
+                BoardCommand.Undo => ("", ToolbarIcon.Undo),
+                BoardCommand.Redo => ("", ToolbarIcon.Redo),
+                BoardCommand.NewPage => ("新しいページ", ToolbarIcon.NewPage),
+                BoardCommand.PageList => ("一覧", null),
+                BoardCommand.PreviousPage => ("", ToolbarIcon.PreviousPage),
+                BoardCommand.NextPage => ("", ToolbarIcon.NextPage),
+                BoardCommand.TogglePin => (selected ? "★ ピン解除" : "☆ ピン留め", null),
+                BoardCommand.BackToPage => ("ページに戻る", null),
+                BoardCommand.RefreshList => ("更新", ToolbarIcon.Refresh),
+                _ => ("閉じる", null),
             };
-            bool history = buttons[i] is BoardCommand.Undo or BoardCommand.Redo;
+            bool history = command is BoardCommand.Undo or BoardCommand.Redo;
             if (!history)
-                VrTheme.Tile(g, rect, page?.IsPinned == true && buttons[i] == BoardCommand.TogglePin,
-                    VrTheme.Surface, VrTheme.Border, enabled);
-            if (enabled && frame.CursorUv is { } target && BoardControls.HitTest(target, list, engine.BoardSize) == buttons[i])
+                VrTheme.Tile(g, rect, selected, VrTheme.Surface, VrTheme.Border, enabled);
+            if (enabled && hover == command)
                 DrawHover(g, rect);
-            var color = !enabled ? VrTheme.Secondary : buttons[i] == BoardCommand.TogglePin && page?.IsPinned == true ? VrTheme.OnAccent : VrTheme.Text;
-            if (history)
-                ToolbarGlyph.Draw(g, buttons[i] == BoardCommand.Undo ? ToolbarIcon.Undo : ToolbarIcon.Redo,
-                new(rect.X + (rect.Width - 40) / 2, rect.Y + (rect.Height - 40) / 2, 40, 40), color, VrTheme.Plate);
-            else
-            {
-                using var brush = new SolidBrush(color);
-                g.DrawString(label, _buttonFont, brush, rect, centered);
-            }
+            var ink = !enabled ? VrTheme.Secondary : selected ? VrTheme.OnAccent : pin ? VrTheme.AccentInk : VrTheme.Text;
+            DrawButtonContent(g, rect, ink, history ? VrTheme.Plate : VrTheme.Surface, content.Label, content.Icon);
+        }
+    }
+
+    private static RectangleF DockBounds((float Left, float Top, float Width, float Height) bounds) => new(
+        bounds.Left * Width, bounds.Top * Height + ToolPalette.DockHeightPixels + ToolPalette.DockGapPixels,
+        bounds.Width * Width, bounds.Height * Height);
+
+    private static void DrawDockSeparator(Graphics g, float previousRight, RectangleF next)
+    {
+        float x = (previousRight + next.Left) / 2;
+        using var pen = new Pen(Color.FromArgb(128, VrTheme.Control));
+        g.DrawLine(pen, x, next.Top + 8, x, next.Bottom - 8);
+    }
+
+    private void DrawButtonContent(Graphics g, RectangleF rect, Color ink, Color background, string label, ToolbarIcon? icon = null)
+    {
+        using var format = StringFormat.GenericTypographic;
+        format.Alignment = StringAlignment.Center;
+        format.LineAlignment = StringAlignment.Center;
+        format.FormatFlags |= StringFormatFlags.NoWrap;
+        float centerX = rect.Left + rect.Width / 2;
+        float centerY = rect.Top + rect.Height / 2;
+        if (icon is { } glyph)
+        {
+            float side = label.Length == 0 ? 40 : 32;
+            float gap = label.Length == 0 ? 0 : 8;
+            float labelWidth = label.Length == 0 ? 0 : g.MeasureString(label, _buttonFont, PointF.Empty, format).Width;
+            float iconLeft = centerX - (side + gap + labelWidth) / 2;
+            ToolbarGlyph.Draw(g, glyph, new(iconLeft, centerY - side / 2, side, side), ink, background);
+            centerX += (side + gap) / 2;
+        }
+        if (label.Length > 0)
+        {
+            using var brush = new SolidBrush(ink);
+            g.DrawString(label, _buttonFont, brush, new PointF(centerX, centerY), format);
         }
     }
 }

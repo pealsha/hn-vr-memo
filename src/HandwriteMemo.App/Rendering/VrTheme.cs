@@ -30,14 +30,22 @@ internal static class VrTheme
         g.FillPath(brush, path);
     }
 
-    internal static void Tile(Graphics g, RectangleF rect, bool selected, Color background, Color border, bool material = true)
+    internal static void Tile(Graphics g, RectangleF rect, bool selected, Color background, Color border, bool material = true) =>
+        DrawTile(g, rect, selected ? Accent : background, selected ? Accent : border,
+            selected ? UiDesign.FocusWidth : UiDesign.BorderWidth, material, halo: selected, glow: selected);
+
+    internal static void SwatchTile(Graphics g, RectangleF rect, bool selected, bool hovered) =>
+        DrawTile(g, rect, Surface, hovered ? AccentInk : selected ? Accent : Control,
+            selected || hovered ? 3 : UiDesign.BorderWidth, material: true, halo: selected, glow: false);
+
+    private static void DrawTile(Graphics g, RectangleF rect, Color background, Color border, float borderWidth, bool material, bool halo, bool glow)
     {
-        if (selected)
+        if (halo)
             for (int i = UiDesign.HaloWidth; i > 0; i--)
             {
-                using var halo = UiTheme.Rounded(RectangleF.Inflate(rect, i, i), Radius + i);
-                using var glow = new SolidBrush(Color.FromArgb(UiDesign.HaloAlpha, Accent));
-                g.FillPath(glow, halo);
+                using var outline = UiTheme.Rounded(RectangleF.Inflate(rect, i, i), Radius + i);
+                using var tint = new SolidBrush(Color.FromArgb(UiDesign.HaloAlpha, Accent));
+                g.FillPath(tint, outline);
             }
         if (material)
         {
@@ -48,15 +56,15 @@ internal static class VrTheme
             g.FillPath(brush, shadow);
         }
         using var path = UiTheme.Rounded(rect, Radius);
-        using var fill = new SolidBrush(selected ? Accent : background);
+        using var fill = new SolidBrush(background);
         g.FillPath(fill, path);
         if (material)
         {
             g.FillPath(s_grain, path);
-            if (selected)
+            if (glow)
                 DrawSelectedGlow(g, rect, path);
         }
-        using var pen = new Pen(selected ? Accent : border, selected ? UiDesign.FocusWidth : UiDesign.BorderWidth);
+        using var pen = new Pen(border, borderWidth);
         g.DrawPath(pen, path);
     }
 

@@ -14,8 +14,8 @@ public static class BoardControls
         BoardCommand.NextPage, BoardCommand.TogglePin, BoardCommand.NewPage, BoardCommand.Close });
     public static IReadOnlyList<BoardCommand> ListButtons { get; } = Array.AsReadOnly(new[]
     { BoardCommand.BackToPage, BoardCommand.NewPage, BoardCommand.RefreshList, BoardCommand.Close });
-    private static readonly int[] s_editorLeft = [0, 96, 192, 344, 456, 568, 720, 888];
-    private static readonly int[] s_editorWidth = [88, 88, 144, 104, 104, 144, 160, 128];
+    private static readonly int[] s_editorLeft = [8, 96, 200, 336, 416, 512, 676, 904];
+    private static readonly int[] s_editorWidth = [80, 80, 128, 72, 72, 156, 204, 112];
 
     // Reference UV uses the standard 48 x 36 cm board, also when the paper grows.
     public static (float Left, float Top, float Width, float Height) ButtonBounds(int index, bool pageList)
@@ -23,8 +23,8 @@ public static class BoardControls
         var buttons = pageList ? ListButtons : EditorButtons;
         if (index < 0 || index >= buttons.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-        return pageList ? ((index * 256 + 4) / (float)BoardMetrics.ReferenceWidthPixels, ButtonTop, 248 / (float)BoardMetrics.ReferenceWidthPixels, .097f)
-            : ((s_editorLeft[index] + 4) / (float)BoardMetrics.ReferenceWidthPixels, ButtonTop, s_editorWidth[index] / (float)BoardMetrics.ReferenceWidthPixels, .097f);
+        return pageList ? ((index * 254 + 8) / (float)BoardMetrics.ReferenceWidthPixels, ButtonTop, 246 / (float)BoardMetrics.ReferenceWidthPixels, .097f)
+            : (s_editorLeft[index] / (float)BoardMetrics.ReferenceWidthPixels, ButtonTop, s_editorWidth[index] / (float)BoardMetrics.ReferenceWidthPixels, .097f);
     }
 
     public static (float Left, float Top, float Width, float Height) CardBounds(int row)
