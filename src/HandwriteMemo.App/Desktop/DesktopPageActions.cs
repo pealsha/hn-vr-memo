@@ -46,9 +46,7 @@ internal sealed class DesktopPageActions(
         // Trash entries are previewed as part of the window's selection state.
         if (entry.IsTrash)
             return;
-        if (_page.Open(entry, _seconds()))
-            _reloadCatalog(true);
-        else
+        if (!_page.Open(entry, _seconds()))
             _catalog.SelectCurrentPage();
     }
 
@@ -158,10 +156,7 @@ internal sealed class DesktopPageActions(
     internal void NewPage()
     {
         if (_page.CanNavigate() && _page.NewPage(_seconds()))
-        {
             _showActiveList();
-            _reloadCatalog(true);
-        }
     }
 
     internal void RestoreEntries(IReadOnlyList<PageCatalogEntry> entries)
@@ -226,10 +221,7 @@ internal sealed class DesktopPageActions(
         int current = _catalog.IndexOf(_page.Id);
         int index = current < 0 ? 0 : current + direction;
         if (index >= 0 && index < entries.Count)
-        {
-            _catalog.SelectIndex(index);
             RunOperation(() => OpenEntry(entries[index]));
-        }
     }
 
     internal void BeginRename(PageCatalogEntry entry)

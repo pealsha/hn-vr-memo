@@ -8,8 +8,10 @@ internal sealed class DesktopCatalogView : IDisposable
     private readonly MemoSession _page;
     private readonly Func<int> _retentionDays;
     private readonly TrashRetention _retention = new(() => DateTimeOffset.UtcNow, _ => { });
-    private readonly Dictionary<string, Bitmap> _previews = [];
+    private Dictionary<string, PageThumbnail> _previews = [];
     private int _refreshDepth;
+
+    private sealed record PageThumbnail(MemoDocument Document, Bitmap Image);
 
     private const int PageItemHeight = 184;
     private const int PagePreviewHeight = 128;
@@ -44,7 +46,22 @@ internal sealed class DesktopCatalogView : IDisposable
     internal string? ErrorDetails { get; private set; }
 
     internal void ResizeRows() => List.ItemHeight = Math.Min(MaximumPageItemHeight, List.LogicalToDeviceUnits(PageItemHeight));
-    internal int IndexOf(Guid id) => Entries.ToList().FindIndex(entry => entry.Document.Id == id);
+    internal int IndexOf(Guid id)
+    {
+        for (int i = 0; i < List.Items.Count; i++)
+            if (((PageCatalogEntry)List.Items[i]).Document.Id == id)
+                return i;
+        return -1;
+    }
+
+    internal void InvalidateChangedLabel(int index, string title, bool pinned)
+    {
+        if (index < 0 || !List.IsHandleCreated)
+            return;
+        var document = ((PageCatalogEntry)List.Items[index]).Document;
+        if (document.Title != title || document.IsPinned != pinned)
+            List.Invalidate(List.GetItemRectangle(index));
+    }
 
     private IDisposable BeginRefresh()
     {
@@ -77,9 +94,9 @@ internal sealed class DesktopCatalogView : IDisposable
             List.SelectionMode = enabled ? SelectionMode.MultiSimple : SelectionMode.MultiExtended;
             List.ClearSelected();
             if (!enabled && !trash)
-                SelectCurrentPage();
-            else if (List.Items.Count > 0)
-                List.TopIndex = Math.Min(top, List.Items.Count - 1);
+                SelectIndex(IndexOf(_page.Id), top);
+            else
+                RestoreScroll(top);
         }
         List.Invalidate();
     }
@@ -96,8 +113,7 @@ internal sealed class DesktopCatalogView : IDisposable
             }
             finally
             {
-                if (List.Items.Count > 0)
-                    List.TopIndex = Math.Min(top, List.Items.Count - 1);
+                RestoreScroll(top);
             }
         }
     }
@@ -114,60 +130,115 @@ internal sealed class DesktopCatalogView : IDisposable
 
     internal void SelectCurrentPage() => SelectIndex(IndexOf(_page.Id));
 
-    internal void SelectIndex(int index)
+    internal void SelectIndex(int index) => SelectIndex(index, List.TopIndex);
+
+    private void SelectIndex(int index, int top)
     {
         using var refresh = BeginRefresh();
         List.ClearSelected();
         if (index >= 0)
             List.SetSelected(index, true);
+        RestoreScroll(top, index);
+    }
+
+    private void RestoreScroll(int top, int selectedIndex = -1)
+    {
+        if (List.Items.Count == 0)
+            return;
+        top = Math.Min(top, List.Items.Count - 1);
+        if (List.TopIndex != top)
+            List.TopIndex = top;
+        if (selectedIndex < 0 || !List.IsHandleCreated ||
+            List.ClientRectangle.IntersectsWith(List.GetItemRectangle(selectedIndex)))
+            return;
+        int wholeRows = Math.Max(1, List.ClientSize.Height / List.ItemHeight);
+        List.TopIndex = Math.Clamp(List.TopIndex, Math.Max(0, selectedIndex - wholeRows + 1), selectedIndex);
     }
 
     internal void Reload(bool trash, bool selectCurrent, Guid displayedPage)
     {
-        using (BeginRefresh())
+        using var refresh = BeginRefresh();
+        var selectedPaths = SelectedEntries.Select(e => e.JsonPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        bool currentWasListed = IndexOf(_page.Id) >= 0;
+        int top = List.TopIndex;
+        var catalog = _page.Catalog;
+        var entries = catalog.List(trash);
+        List.BeginUpdate();
+        try
         {
-            List.BeginUpdate();
-            try
+            List.Items.Clear();
+            foreach (var entry in entries)
+                List.Items.Add(entry);
+            if (IsSelectionMode || trash || !selectCurrent && displayedPage == _page.Id && currentWasListed)
             {
-                var selectedPaths = SelectedEntries.Select(e => e.JsonPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                bool currentWasListed = Entries.Any(e => e.Document.Id == _page.Id);
-                int top = List.TopIndex;
-                var catalog = _page.Catalog;
-                var entries = catalog.List(trash);
-                foreach (var image in _previews.Values)
-                    image.Dispose();
-                _previews.Clear();
-                List.Items.Clear();
-                int previewWidth = Math.Max(List.LogicalToDeviceUnits(20), List.ClientSize.Width - List.LogicalToDeviceUnits(24));
-                int previewHeight = PreviewHeight;
-                foreach (var entry in entries)
-                {
-                    _previews[entry.JsonPath] = PagePreview.Create(entry.Document, previewWidth, previewHeight);
-                    List.Items.Add(entry);
-                }
-                if (IsSelectionMode || trash || !selectCurrent && displayedPage == _page.Id && currentWasListed)
-                {
-                    for (int i = 0; i < entries.Count; i++)
-                        if (selectedPaths.Contains(entries[i].JsonPath))
-                            List.SetSelected(i, true);
-                    if (entries.Count > 0)
-                        List.TopIndex = Math.Min(top, entries.Count - 1);
-                }
-                else
-                    SelectCurrentPage();
-                var firstName = catalog.Errors.Count == 0 ? "" : Path.GetFileName(catalog.Errors[0].Path);
-                if (firstName.Length > 48)
-                    firstName = firstName[..48] + "…";
-                Warning = catalog.Errors.Count == 0 ? null : $"読めないページ: {firstName}（計 {catalog.Errors.Count} 件）。元のファイルは残しています。「詳細」で対象を確認し、直した後に回転矢印で一覧を更新してください。";
-                ErrorDetails = catalog.Errors.Count == 0 ? null : string.Join("\n\n", catalog.Errors.Select(e => e.Path + "\n" + e.Error.Message));
-                SavedRevision = _page.SavedRevision;
-                _page.NotifyCatalogChanged();
+                for (int i = 0; i < entries.Count; i++)
+                    if (selectedPaths.Contains(entries[i].JsonPath))
+                        List.SetSelected(i, true);
+                RestoreScroll(top);
             }
-            finally
+            else
+                SelectIndex(IndexOf(_page.Id), top);
+        }
+        finally
+        {
+            List.EndUpdate();
+        }
+        // The native scroll bar can change the client width when row updates end.
+        RefreshPreviews(entries);
+        var firstName = catalog.Errors.Count == 0 ? "" : Path.GetFileName(catalog.Errors[0].Path);
+        if (firstName.Length > 48)
+            firstName = firstName[..48] + "…";
+        Warning = catalog.Errors.Count == 0 ? null : $"読めないページ: {firstName}（計 {catalog.Errors.Count} 件）。元のファイルは残しています。「詳細」で対象を確認し、直した後に回転矢印で一覧を更新してください。";
+        ErrorDetails = catalog.Errors.Count == 0 ? null : string.Join("\n\n", catalog.Errors.Select(e => e.Path + "\n" + e.Error.Message));
+        SavedRevision = _page.SavedRevision;
+        _page.NotifyCatalogChanged();
+    }
+
+    private void RefreshPreviews(IReadOnlyList<PageCatalogEntry> entries)
+    {
+        int width = Math.Max(List.LogicalToDeviceUnits(20), List.ClientSize.Width - List.LogicalToDeviceUnits(24));
+        var size = new Size(width, PreviewHeight);
+        var previews = new Dictionary<string, PageThumbnail>(entries.Count);
+        try
+        {
+            foreach (var entry in entries)
             {
-                List.EndUpdate();
+                var document = entry.Document;
+                var image = _previews.TryGetValue(entry.JsonPath, out var cached) && cached.Image.Size == size &&
+                    HasSameInk(cached.Document, document)
+                    ? cached.Image
+                    : PagePreview.Create(document, size.Width, size.Height);
+                previews.Add(entry.JsonPath, new(document, image));
             }
         }
+        catch
+        {
+            DisposeUnusedPreviews(previews, _previews);
+            throw;
+        }
+        DisposeUnusedPreviews(_previews, previews);
+        _previews = previews;
+    }
+
+    private static bool HasSameInk(MemoDocument previous, MemoDocument current)
+    {
+        if (previous.BoardSize != current.BoardSize || previous.Strokes.Count != current.Strokes.Count)
+            return false;
+        for (int i = 0; i < previous.Strokes.Count; i++)
+        {
+            var before = previous.Strokes[i];
+            var after = current.Strokes[i];
+            if (before.Color != after.Color || before.WidthMetres != after.WidthMetres || !before.Points.SequenceEqual(after.Points))
+                return false;
+        }
+        return true;
+    }
+
+    private static void DisposeUnusedPreviews(Dictionary<string, PageThumbnail> previews, Dictionary<string, PageThumbnail> retained)
+    {
+        foreach (var (path, preview) in previews)
+            if (!retained.TryGetValue(path, out var keep) || keep.Image != preview.Image)
+                preview.Image.Dispose();
     }
 
     private void DrawPage(object? sender, DrawItemEventArgs e)
@@ -195,8 +266,8 @@ internal sealed class DesktopCatalogView : IDisposable
             x += gutter;
             w = Math.Max(Px(20), w - gutter);
         }
-        if (_previews.TryGetValue(entry.JsonPath, out var image))
-            e.Graphics.DrawImage(image, new Rectangle(x, y, w, previewHeight));
+        if (_previews.TryGetValue(entry.JsonPath, out var preview))
+            e.Graphics.DrawImage(preview.Image, new Rectangle(x, y, w, previewHeight));
         var document = entry.Document;
         bool live = document.Id == _page.Id && !entry.IsTrash;
         var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix;
@@ -222,8 +293,8 @@ internal sealed class DesktopCatalogView : IDisposable
     public void Dispose()
     {
         List.DrawItem -= DrawPage;
-        foreach (var image in _previews.Values)
-            image.Dispose();
+        foreach (var preview in _previews.Values)
+            preview.Image.Dispose();
         _previews.Clear();
     }
 }

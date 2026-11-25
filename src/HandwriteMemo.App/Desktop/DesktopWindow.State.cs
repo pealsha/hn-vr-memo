@@ -14,6 +14,9 @@ internal sealed partial class DesktopWindow
     {
         if (_catalog.IsRefreshing && change == SessionChange.CatalogInvalidated)
             return; // Reloading this catalog already updated the desktop list.
+        // A blank page adds no row. Saving the previous page sends a separate notification.
+        if ((change & SessionChange.PageSwitched) != 0 && _page.SaveState == PageSaveState.New)
+            change &= ~SessionChange.CatalogInvalidated;
         _pendingSessionChange |= change;
         PostSessionUpdate();
     }
@@ -40,16 +43,17 @@ internal sealed partial class DesktopWindow
 
     private void SynchronizePageView(bool refresh)
     {
-        if (_displayedPage != _page.Id)
+        var previous = _displayedPage;
+        _displayedPage = (_page.Id, _page.Title, _page.IsPinned);
+        if (previous.Id != _page.Id)
         {
             _actions.EndRename(false);
-            _displayedPage = _page.Id;
             _pageMenu.Close();
             // A shared page opened from VR returns the PC from trash preview to the editor.
             if (_trash.Checked)
                 _listTab.Checked = true;
             else if (!_catalog.IsRefreshing)
-                ReloadCatalog(selectCurrent: true);
+                SynchronizeCatalogSelection(previous);
         }
         if (refresh && !_catalog.IsRefreshing && Visible && !_pageMenu.Visible && !_nameEditor.Visible && !_page.IsBusy &&
             (_catalogInvalidated || _catalog.SavedRevision != _page.SavedRevision))
@@ -59,6 +63,22 @@ internal sealed partial class DesktopWindow
             _revision = _page.Revision;
             _canvas.Invalidate();
         }
+    }
+
+    private void SynchronizeCatalogSelection((Guid Id, string Title, bool IsPinned) previous)
+    {
+        int index = _catalog.IndexOf(_page.Id);
+        if (index < 0 && _page.SaveState != PageSaveState.New)
+        {
+            ReloadCatalog(selectCurrent: true);
+            return;
+        }
+        if (!IsSelectionMode && (index < 0
+            ? _pages.SelectedItems.Count > 0
+            : _pages.SelectedItems.Count != 1 || !_pages.GetSelected(index)))
+            _catalog.SelectIndex(index);
+        _catalog.InvalidateChangedLabel(_catalog.IndexOf(previous.Id), previous.Title, previous.IsPinned);
+        _catalog.InvalidateChangedLabel(index, _page.Title, _page.IsPinned);
     }
 
     private void UpdateEditingState(bool readOnly, bool selecting)
@@ -132,10 +152,10 @@ internal sealed partial class DesktopWindow
         // The selection count is shown only in the list header, which also keeps these buttons from overflowing.
         bool selectedPinned = (!selecting || selectedCount > 0) && _actions.AllPinned(SelectedEntries);
         _pin.Text = selectedPinned ? "★ ピン解除" : "☆ ピン留め";
-        var entries = Entries;
-        int index = entries.ToList().FindIndex(e => e.Document.Id == _page.Id);
+        int index = _catalog.IndexOf(_page.Id);
+        int count = _pages.Items.Count;
         _previous.Enabled = !_trash.Checked && index > 0;
-        _next.Enabled = !_trash.Checked && entries.Count > 0 && index < entries.Count - 1;
+        _next.Enabled = !_trash.Checked && count > 0 && index < count - 1;
     }
 
 }

@@ -259,7 +259,7 @@ public sealed class SelectionModeTests
         bitmap.Save(Path.Combine(root, name + ".png"), ImageFormat.Png);
     }
 
-    private static void ClickRow(ListBox list, int index, float across = .5f, int down = 30)
+    internal static void ClickRow(ListBox list, int index, float across = .5f, int down = 30)
     {
         list.TopIndex = Math.Min(index, list.TopIndex);
         var row = list.GetItemRectangle(index);

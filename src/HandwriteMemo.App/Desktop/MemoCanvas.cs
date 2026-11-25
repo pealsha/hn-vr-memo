@@ -90,13 +90,20 @@ internal sealed class MemoCanvas : Control
         MoveInput(point);
     }
 
+    private bool ShowsHoverCursor => !ReadOnly && _tool() == DrawingTool.Eraser && _eraseMode() == EraserMode.Partial;
+
     internal void MoveInput(Point point)
     {
+        bool hadHover = _hoverPoint is not null;
         _hoverPoint = point;
-        Invalidate();
-        if (!_pressed)
+        if (_pressed)
+        {
+            Invalidate();
+            _page.DesktopPoint(PagePoint(point), true, _seconds(), _tool());
             return;
-        _page.DesktopPoint(PagePoint(point), true, _seconds(), _tool());
+        }
+        if (ShowsHoverCursor && (hadHover || PagePoint(point) is not null))
+            Invalidate();
     }
 
     internal void EndInput()
@@ -133,8 +140,15 @@ internal sealed class MemoCanvas : Control
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
+        ClearHover();
+    }
+
+    private void ClearHover()
+    {
+        bool hadHover = _hoverPoint is not null;
         _hoverPoint = null;
-        Invalidate();
+        if (hadHover && ShowsHoverCursor)
+            Invalidate();
     }
     protected override void OnMouseCaptureChanged(EventArgs e)
     {
@@ -169,10 +183,7 @@ internal sealed class MemoCanvas : Control
                     _pointer = null;
                 }
                 if (m.Msg is Leave or CaptureChanged || canceled)
-                {
-                    _hoverPoint = null;
-                    Invalidate();
-                }
+                    ClearHover();
                 if (m.Msg == Leave)
                     _nativePenSeen = false;
                 m.Result = IntPtr.Zero;

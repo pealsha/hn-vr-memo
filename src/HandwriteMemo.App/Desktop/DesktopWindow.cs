@@ -93,7 +93,7 @@ internal sealed partial class DesktopWindow : Form
     private bool _sessionUpdatePosted, _catalogInvalidated;
     private (DrawingTool Tool, string Color, float Width, EraserMode Eraser)? _shownTools;
     private long _revision = -1;
-    private Guid _displayedPage;
+    private (Guid Id, string Title, bool IsPinned) _displayedPage;
     internal IReadOnlyList<PageCatalogEntry> Entries => _catalog.Entries;
     internal MemoCanvas Canvas => _canvas;
     internal ListBox PagesList => _pages;
@@ -162,7 +162,7 @@ internal sealed partial class DesktopWindow : Form
         if (_nameEditor.Visible)
             return; // Autosave must not replace the row while its name is being edited.
         _catalogInvalidated = false;
-        _actions.RunOperation(() => _catalog.Reload(_trash.Checked, selectCurrent, _displayedPage),
+        _actions.RunOperation(() => _catalog.Reload(_trash.Checked, selectCurrent, _displayedPage.Id),
             "一覧を読み込めませんでした。今の筆跡とファイルは残っています。「詳細」を確認し、回転矢印で一覧を更新してください。");
     }
 
