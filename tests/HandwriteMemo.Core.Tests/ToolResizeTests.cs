@@ -66,7 +66,7 @@ public sealed class ToolResizeTests
                         !(eraser ? start.Eraser.InputAvailable : start.Pen.InputAvailable), "Fresh trigger captures and suppresses tool input");
                     var sign = handedness == HandSide.Right ? 1 : -1;
                     var moved = scene.Update(Frame(side, Hand(at + new Vector3(.101f * sign, -.081f, 0), trigger: true)));
-                    Check(Math.Abs(moved.BoardSize.WidthMetres - .58f) < .0001f && Math.Abs(moved.BoardSize.HeightMetres - .44f) < .0001f, "Quantized tool resize");
+                    Check(Math.Abs(moved.BoardSize.WidthMetres - .581f) < .0001f && Math.Abs(moved.BoardSize.HeightMetres - .441f) < .0001f, "Continuous tool resize");
                     var released = scene.Update(Frame(side, Hand(at, trigger: false)));
                     Check(released.ResizeHolder is null && released.ToolResizeSuppressedHand == side &&
                         !(eraser ? released.Eraser.InputAvailable : released.Pen.InputAvailable), "Release frame remains suppressed");

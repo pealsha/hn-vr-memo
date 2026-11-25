@@ -52,7 +52,7 @@ public sealed class SessionHistoryTests
         Check(engine.Strokes.Count == erasedCount, "partial erasure redo after multiple visits");
         page.Undo(Now());
         Check(page.SetVrResizing(true, Now()), "resize starts");
-        Check(page.Resize(new(.8f, .6f), Now()), "resize changes size");
+        Check(page.Resize(new(.8f, .6f)), "resize changes size");
         page.SetVrResizing(false, Now());
         Check(page.Open(Entry(second), Now()) && page.Open(Entry(first), Now()), "navigate resized page");
         page.Redo(Now());

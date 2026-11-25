@@ -1,3 +1,4 @@
+using HandwriteMemo.Core;
 using Valve.VR;
 
 namespace HandwriteMemo.App;
@@ -22,6 +23,7 @@ internal sealed class VrSessionResources
     internal Dictionary<ulong, OverlayMotion> Attachments { get; } = [];
     internal D3DTexture ToolsTexture { get; private set; } = null!;
     internal D3DTexture? BoardTexture { get; private set; }
+    private BoardResizePreview? _resizePreview;
     internal Bitmap DashboardImage { get; private set; } = null!;
     internal D3DTexture DashboardTexture { get; private set; } = null!;
     internal Bitmap TabImage { get; private set; } = null!;
@@ -90,6 +92,22 @@ internal sealed class VrSessionResources
             }
     }
 
+    internal BoardResizePreview GetResizePreview(HandwriteEngine engine, HandSide handedness)
+    {
+        if (_resizePreview?.Handedness != handedness)
+        {
+            EndResizePreview();
+            _resizePreview = new(engine, handedness);
+        }
+        return _resizePreview;
+    }
+
+    internal void EndResizePreview()
+    {
+        _resizePreview?.Dispose();
+        _resizePreview = null;
+    }
+
     internal void EnsureBoardTexture(IOpenVrOverlay overlay, D3DDevice device, Bitmap image)
     {
         if (BoardTexture is null || BoardTexture.Width != image.Width || BoardTexture.Height != image.Height)
@@ -112,6 +130,7 @@ internal sealed class VrSessionResources
         }
         Handles.Clear();
         Attachments.Clear();
+        EndResizePreview();
         BoardTexture?.Dispose();
         foreach (var texture in EraserTextures)
             texture.Dispose();

@@ -13,13 +13,14 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
     private string? _calibrationTextureText;
     private bool _penHighlighted, _eraserHighlighted;
     private BoardImageState? _boardImageState;
+    private float? _boardWidthMetres;
 
     private readonly record struct BoardImageState(
         Guid PageId, long InkRevision, long ActiveStrokeRevision, BoardSize Size,
         Vector2? Cursor, ContactState Contact, DrawingTool Tool, bool Highlighted,
         string PenColor, float PenWidth, EraserMode EraserMode, bool CanUndo, bool CanRedo, bool Busy,
         VrInputStatus Status, string? Notice, string? Failure, bool SaveFailed, bool Pinned,
-        bool ListOpen, int ListScreen, long ListRevision, string? ListNotice, string? PageTitle,
+        HandSide? ResizeHand, bool ListOpen, int ListScreen, long ListRevision, string? ListNotice, string? PageTitle,
         bool CanGoBack, bool CanGoForward);
 
     private (int HoverMask, bool Visible, HandSide Hand, float Brightness, ToggleGestureMode Gesture,
@@ -52,11 +53,13 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
     internal void Show()
     {
         _boardImageState = null;
+        _boardWidthMetres = null;
         Check(_overlay.ShowOverlay(_resources.Board), "show board");
     }
 
     internal void Hide()
     {
+        _resources.EndResizePreview();
         Check(_overlay.HideOverlay(_resources.Board), "hide board");
         Check(_overlay.HideOverlay(_resources.ToolsDock), "hide tools");
         Check(_overlay.HideOverlay(_resources.ResizeHandle), "hide resize handle");
@@ -190,7 +193,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
     internal void RenderResizeHandle(HandInput leftHand, HandInput rightHand, uint left, uint right, bool highlighted)
     {
         SetAttachedPose(_resources.ResizeHandle, VrOverlaySprites.ResizeVisualPose(_scene.ResizeHandlePose),
-            _scene.ResizeHolder ?? _scene.BoardHolder, leftHand, rightHand, left, right);
+            _scene.BoardHolder, leftHand, rightHand, left, right);
         int state = _scene.ResizeHolder is not null ? 3 : highlighted ? 1 : _scene.ResizeEnabled && _scene.BoardHolder is null ? 0 : 2;
         int index = (Options.Handedness == HandSide.Left ? 4 : 0) + state;
         // Fixed textures stay submitted until their visible state actually changes.
@@ -198,7 +201,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
         {
             Submit(_resources.ResizeHandle, _resources.ResizeTextures[index]);
             _resizeTextureIndex = index;
-            _log.Event($"resize texture state={state}; holder={_scene.ResizeHolder ?? _scene.BoardHolder}");
+            _log.Event($"resize texture state={state}; holder={_scene.BoardHolder}");
         }
         if (_pages.IsOpen)
             Check(_overlay.HideOverlay(_resources.ResizeHandle), "hide resize handle in list");
@@ -225,7 +228,6 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
         var rightHand = hands.RightHand;
         uint left = hands.Left;
         uint right = hands.Right;
-        SetAttachedPose(_resources.Board, _scene.BoardPose, _scene.BoardHolder, leftHand, rightHand, left, right);
         var state = VrInputGuide.Status(_engine, _page, _scene, result, leftHand, rightHand,
             _overlay.IsDashboardVisible(), isTracked(OpenVR.k_unTrackedDeviceIndex_Hmd));
         if (_page.TriggerUndoNotice(seconds()) is { } undoNotice)
@@ -234,7 +236,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
         bool highlightBoard = highlights.Contains(Grabbable.Board);
         bool highlightEraser = highlights.Contains(Grabbable.Eraser);
         bool highlightResize = result.ResizeHolder is not null || highlights.Contains(Grabbable.ResizeHandle);
-        var timings = UpdateBoardImages(device, painter, frame, state, highlightBoard);
+        var timings = UpdateBoardImages(device, painter, hands, frame, state, highlightBoard);
         SetAttachedPose(_resources.ToolsDock, BoardPainter.ToolsPose(_scene.BoardPose, _engine.BoardSize),
             _scene.BoardHolder, leftHand, rightHand, left, right);
         Check(_overlay.ShowOverlay(_resources.ToolsDock), "show tools and recovery guidance");
@@ -255,7 +257,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
         return timings;
     }
 
-    private (double RenderMs, double UploadMs) UpdateBoardImages(D3DDevice device, BoardPainter painter, FrameResult frame,
+    private (double RenderMs, double UploadMs) UpdateBoardImages(D3DDevice device, BoardPainter painter, VrHands hands, FrameResult frame,
         VrInputStatus status, bool highlighted)
     {
         bool list = _pages.IsOpen;
@@ -279,6 +281,7 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
             Failure: _page.VrFailureMessage,
             SaveFailed: _page.Error is not null,
             Pinned: _page.IsPinned,
+            ResizeHand: _page.IsResizing && !list ? Options.Handedness : null,
             ListOpen: list,
             ListScreen: list ? _pages.Screen : 0,
             ListRevision: list ? _pages.Revision : 0,
@@ -286,23 +289,55 @@ internal sealed class VrOverlayView(IOpenVrOverlay _overlay, VrSessionResources 
             PageTitle: list ? _page.Title : null,
             CanGoBack: _pages.CanNavigate(-1),
             CanGoForward: _pages.CanNavigate(1));
-        if (state == _boardImageState)
+        bool changed = state != _boardImageState;
+        double renderStart = changed ? seconds() : 0;
+        var preview = state.ResizeHand is { } hand ? _resources.GetResizePreview(_engine, hand) : null;
+        bool uploadBoard = changed && (preview is null || _boardImageState?.Size != state.Size ||
+            _boardImageState?.ResizeHand != state.ResizeHand);
+        bool uploadDock = false;
+        if (changed)
+        {
+            if (preview is null)
+            {
+                _resources.EndResizePreview();
+                painter.Draw(_engine, frame, status, highlighted, _page, _pages);
+                uploadDock = true;
+            }
+            else
+            {
+                if (uploadBoard)
+                    preview.Draw(state.Size);
+                uploadDock = painter.DrawResizeDock(_engine, status, _page);
+            }
+        }
+        double uploadStart = changed ? seconds() : 0;
+        var image = preview?.Image ?? painter.Image;
+        if (uploadBoard)
+        {
+            _resources.EnsureBoardTexture(_overlay, device, image);
+            float width = (preview?.Size ?? state.Size).WidthMetres;
+            if (_boardWidthMetres != width || preview is null && _boardImageState?.ResizeHand is not null)
+            {
+                Check(_overlay.SetOverlayWidthInMeters(_resources.Board, width), "board width");
+                _boardWidthMetres = width;
+            }
+        }
+        var pose = preview?.PoseFor(_scene.BoardPose, state.Size) ?? _scene.BoardPose;
+        SetAttachedPose(_resources.Board, pose, _scene.BoardHolder, hands.LeftHand, hands.RightHand, hands.Left, hands.Right);
+        if (!changed)
             return default;
-
-        double renderStart = seconds();
-        painter.Draw(_engine, frame, status, highlighted, _page, _pages);
-        double renderMs = (seconds() - renderStart) * 1000;
-
-        double uploadStart = seconds();
-        _resources.EnsureBoardTexture(_overlay, device, painter.Image);
-        if (_boardImageState?.Size != state.Size)
-            Check(_overlay.SetOverlayWidthInMeters(_resources.Board, state.Size.WidthMetres), "board width");
-        _resources.BoardTexture!.Upload(painter.Image);
-        Submit(_resources.Board, _resources.BoardTexture);
-        _resources.ToolsTexture.Upload(painter.ToolsImage);
-        Submit(_resources.ToolsDock, _resources.ToolsTexture);
+        if (uploadBoard)
+        {
+            _resources.BoardTexture!.Upload(image);
+            Submit(_resources.Board, _resources.BoardTexture);
+        }
+        if (uploadDock)
+        {
+            _resources.ToolsTexture.Upload(painter.ToolsImage);
+            Submit(_resources.ToolsDock, _resources.ToolsTexture);
+        }
         _boardImageState = state;
-        return (renderMs, (seconds() - uploadStart) * 1000);
+        return ((uploadStart - renderStart) * 1000, (seconds() - uploadStart) * 1000);
     }
 
     internal void RenderWristCalibration(BoardPose head, bool headValid, string? notice)

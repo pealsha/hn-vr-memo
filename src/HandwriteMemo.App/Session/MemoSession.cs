@@ -362,15 +362,13 @@ internal sealed class MemoSession
         return true;
     }
 
-    public bool Resize(BoardSize size, double seconds, bool anchorRight = false)
+    public bool Resize(BoardSize size, bool anchorRight = false)
     {
         if (!IsResizing || DesktopOwnsInput || !_engine.ResizeBoard(size, anchorRight))
             return false;
         _dirty = true;
         Revision++;
         Notify(SessionChange.Document);
-        if (seconds - _lastAttempt >= 1)
-            Save(seconds);
         return true;
     }
 

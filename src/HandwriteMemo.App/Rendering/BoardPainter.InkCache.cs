@@ -64,12 +64,7 @@ internal sealed partial class BoardPainter
         using (var g = Graphics.FromImage(_completedInk!))
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            g.Clear(UiTheme.Surface);
-            using var grid = new Pen(UiTheme.Grid);
-            for (int x = 32; x < Image.Width; x += 32)
-                g.DrawLine(grid, x, 0f, x, Image.Height);
-            for (int y = 32; y < Image.Height; y += 32)
-                g.DrawLine(grid, 0, y, Image.Width, y);
+            DrawPaperGrid(g, Image.Size);
             foreach (var stroke in engine.Strokes)
             {
                 if (ReferenceEquals(stroke, engine.ActiveStroke))
@@ -84,6 +79,20 @@ internal sealed partial class BoardPainter
         _completedInkRevision = engine.InkRevision;
         _liveInkRevision = -1;
         UpdateLiveInk(engine);
+    }
+
+    internal static void DrawPaperGrid(Graphics g, Size size, bool anchorRight = false)
+    {
+        const int Spacing = 32;
+        g.Clear(UiTheme.Surface);
+        using var grid = new Pen(UiTheme.Grid);
+        for (int offset = Spacing; offset < size.Width; offset += Spacing)
+        {
+            int x = anchorRight ? size.Width - offset : offset;
+            g.DrawLine(grid, x, 0f, x, size.Height);
+        }
+        for (int y = Spacing; y < size.Height; y += Spacing)
+            g.DrawLine(grid, 0, y, size.Width, y);
     }
 
     private void UpdateLiveInk(HandwriteEngine engine)

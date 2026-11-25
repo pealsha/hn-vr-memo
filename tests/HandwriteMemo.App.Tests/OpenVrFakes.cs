@@ -16,7 +16,10 @@ internal sealed class FakeVrOverlay(Queue<VREvent_t>? events = null, ulong event
 {
     internal Action<ulong, float, float, float>? ColorChanged { get; init; }
     internal Action<ulong>? TextureSubmitted { get; init; }
-    internal Action<ulong>? PoseUpdated { get; init; }
+    internal Action<ulong>? TextureCleared { get; init; }
+    internal Action<ulong, float>? WidthChanged { get; init; }
+    internal Action<ulong, HmdMatrix34_t>? PoseUpdated { get; init; }
+    internal Action<ulong>? RelativePoseUpdated { get; init; }
 
     public EVROverlayError CreateOverlay(string pchOverlayKey, string pchOverlayName, ref ulong pOverlayHandle) => throw new NotSupportedException();
     public EVROverlayError DestroyOverlay(ulong ulOverlayHandle) => throw new NotSupportedException();
@@ -27,13 +30,21 @@ internal sealed class FakeVrOverlay(Queue<VREvent_t>? events = null, ulong event
         return EVROverlayError.None;
     }
     public EVROverlayError SetOverlaySortOrder(ulong ulOverlayHandle, uint unSortOrder) => throw new NotSupportedException();
-    public EVROverlayError SetOverlayWidthInMeters(ulong ulOverlayHandle, float fWidthInMeters) => EVROverlayError.None;
-    public EVROverlayError SetOverlayTransformAbsolute(ulong ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform)
+    public EVROverlayError SetOverlayWidthInMeters(ulong ulOverlayHandle, float fWidthInMeters)
     {
-        PoseUpdated?.Invoke(ulOverlayHandle);
+        WidthChanged?.Invoke(ulOverlayHandle, fWidthInMeters);
         return EVROverlayError.None;
     }
-    public EVROverlayError SetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle, uint unTrackedDevice, ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform) => throw new NotSupportedException();
+    public EVROverlayError SetOverlayTransformAbsolute(ulong ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform)
+    {
+        PoseUpdated?.Invoke(ulOverlayHandle, pmatTrackingOriginToOverlayTransform);
+        return EVROverlayError.None;
+    }
+    public EVROverlayError SetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle, uint unTrackedDevice, ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform)
+    {
+        RelativePoseUpdated?.Invoke(ulOverlayHandle);
+        return EVROverlayError.None;
+    }
     public EVROverlayError ShowOverlay(ulong ulOverlayHandle) => EVROverlayError.None;
     public EVROverlayError HideOverlay(ulong ulOverlayHandle) => EVROverlayError.None;
     public EVROverlayError WaitFrameSync(uint nTimeoutMs) => throw new NotSupportedException();
@@ -45,7 +56,11 @@ internal sealed class FakeVrOverlay(Queue<VREvent_t>? events = null, ulong event
         TextureSubmitted?.Invoke(ulOverlayHandle);
         return EVROverlayError.None;
     }
-    public EVROverlayError ClearOverlayTexture(ulong ulOverlayHandle) => EVROverlayError.None;
+    public EVROverlayError ClearOverlayTexture(ulong ulOverlayHandle)
+    {
+        TextureCleared?.Invoke(ulOverlayHandle);
+        return EVROverlayError.None;
+    }
     public EVROverlayError CreateDashboardOverlay(string pchOverlayKey, string pchOverlayFriendlyName, ref ulong pMainHandle, ref ulong pThumbnailHandle) => throw new NotSupportedException();
     public bool IsDashboardVisible() => false;
 }

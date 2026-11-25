@@ -136,7 +136,7 @@ internal sealed partial class VrOverlayHost
         var result = scene.Update(input);
         page.SetVrResizing(result.ResizeHolder is not null, seconds);
         if (result.ResizeHolder is not null)
-            page.Resize(result.BoardSize, seconds, handedness == HandSide.Left);
+            page.Resize(result.BoardSize, handedness == HandSide.Left);
         return result;
     }
 

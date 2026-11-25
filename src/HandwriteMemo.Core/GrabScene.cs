@@ -266,10 +266,8 @@ public sealed class GrabScene
             if (!_resizeMoved && new Vector2(delta.X, delta.Y).Length() < BoardResize.DeadZoneMetres)
                 return;
             _resizeMoved = true;
-            // Five millimetre steps reduce texture reallocations and hand jitter.
-            float Step(float value) => MathF.Round(value / .005f) * .005f;
-            _boardSize = BoardResize.Clamp(new(Math.Max(.001f, _resizeStartSize.WidthMetres + BoardResize.Direction(Handedness) * Step(delta.X)),
-                Math.Max(.001f, _resizeStartSize.HeightMetres - Step(delta.Y))), _minimumSize, _resizeStartSize);
+            _boardSize = BoardResize.Clamp(new(Math.Max(.001f, _resizeStartSize.WidthMetres + BoardResize.Direction(Handedness) * delta.X),
+                Math.Max(.001f, _resizeStartSize.HeightMetres - delta.Y)), _minimumSize, _boardSize);
             _boardPose = _resizeStartPose with
             {
                 Position = _resizeStartPose.LocalToWorld(new(

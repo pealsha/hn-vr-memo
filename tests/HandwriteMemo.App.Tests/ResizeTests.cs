@@ -46,14 +46,14 @@ public sealed class ResizeTests
         using var standardPng = MemoRenderer.Render(page.Snapshot());
         Check(page.SetVrResizing(true, Now()), "Begin VR resize");
         Check(!page.BeginDesktop(Now()) && !page.CanNavigate(), "PC input and navigation wait for resize release");
-        Check(page.Resize(new(.64f, .44f), Now()), "Resize intermediate page");
+        Check(page.Resize(new(.64f, .44f)), "Resize intermediate page");
         page.SetVrResizing(false, Now());
         Capture("expanded", new(.64f, .44f));
         CheckControls(reference, painter.Image);
         Compare(referenceTools, painter.ToolsImage, new(0, 91, 1024, ToolPalette.DockHeightPixels - 91), new(0, 91));
         using var expanded = (Bitmap)painter.Image.Clone();
         Check(page.SetVrResizing(true, Now()), "Begin second resize");
-        Check(page.Resize(BoardResize.Maximum, Now()), "Resize maximum page");
+        Check(page.Resize(BoardResize.Maximum), "Resize maximum page");
         page.SetVrResizing(false, Now());
         Capture("maximum", BoardResize.Maximum);
         CheckControls(reference, painter.Image);

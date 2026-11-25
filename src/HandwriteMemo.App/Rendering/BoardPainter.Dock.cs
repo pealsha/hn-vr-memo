@@ -6,6 +6,11 @@ namespace HandwriteMemo.App;
 
 internal sealed partial class BoardPainter
 {
+    private readonly record struct DockNotice(string? Text, bool IsError, bool SaveFailed);
+    private readonly record struct EditorDockState(string PenColor, float PenWidth, EraserMode Eraser,
+        bool Pinned, bool UndoEnabled, bool RedoEnabled, DockNotice Notice);
+    private EditorDockState? _editorDockState;
+
     public Bitmap ToolsImage { get; } = new(ToolPalette.DockWidthPixels, ToolPalette.DockHeightPixels, PixelFormat.Format32bppArgb);
 
     // This overlay stays at a fixed physical offset from the paper's top-left corner.
@@ -23,22 +28,50 @@ internal sealed partial class BoardPainter
 
     private void DrawDock(HandwriteEngine engine, FrameResult frame, VrInputStatus status, MemoSession? page, VrPageBrowser? vrPages, bool list)
     {
+        var notice = NoticeForDock(status, page, list ? vrPages : null);
+        DrawDock(engine, frame, notice, page, vrPages, list);
+        _editorDockState = !list && frame.CursorUv is not { Y: < 0 } ? EditorDock(engine, page, notice) : null;
+    }
+
+    internal bool DrawResizeDock(HandwriteEngine engine, VrInputStatus status, MemoSession page)
+    {
+        var notice = NoticeForDock(status, page, null);
+        var state = EditorDock(engine, page, notice);
+        if (_editorDockState == state)
+            return false;
+        // Resize owns input, so there is no dock hover.
+        DrawDock(engine, default, notice, page, null, list: false);
+        _editorDockState = state;
+        return true;
+    }
+
+    private static EditorDockState EditorDock(HandwriteEngine engine, MemoSession? page, DockNotice notice) => new(
+        engine.PenColor, engine.PenWidthMetres, engine.EraserMode, page?.IsPinned == true,
+        engine.CanUndo && page?.IsBusy != true, engine.CanRedo && page?.IsBusy != true, notice);
+
+    private static DockNotice NoticeForDock(VrInputStatus status, MemoSession? page, VrPageBrowser? list)
+    {
+        string? guide = page?.VrFailureMessage ?? page?.Notice ?? list?.Notice;
+        if (guide is null && (status.ShowInDock || status.IsError))
+            guide = status.Text;
+        return new(guide, page?.VrFailureMessage is not null || status.IsError, page?.Error is not null);
+    }
+
+    private void DrawDock(HandwriteEngine engine, FrameResult frame, DockNotice notice, MemoSession? page, VrPageBrowser? vrPages, bool list)
+    {
         using var g = Graphics.FromImage(ToolsImage);
         g.Clear(Color.Transparent);
         g.SmoothingMode = SmoothingMode.AntiAlias;
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-        string? guide = page?.VrFailureMessage ?? page?.Notice ?? (list ? vrPages?.Notice : null);
-        if (guide is null && (status.ShowInDock || status.IsError))
-            guide = status.Text;
-        if (guide is not null)
+        if (notice.Text is { } guide)
         {
-            bool error = page?.VrFailureMessage is not null || status.IsError;
+            bool error = notice.IsError;
             using var fill = new SolidBrush(error ? VrTheme.Error : VrTheme.Notice);
             using var border = new Pen(error ? VrTheme.ErrorInk : VrTheme.NoticeInk, 3);
             using var guideInk = new SolidBrush(error ? VrTheme.ErrorInk : VrTheme.NoticeInk);
             g.FillRectangle(fill, 3, 3, Width - 6, 84);
             g.DrawRectangle(border, 3, 3, Width - 6, 84);
-            if (page?.Error is not null)
+            if (notice.SaveFailed)
             {
                 g.DrawString("保存できません · 筆跡はアプリ内に保持中", _buttonFont, guideInk, 12, 4);
                 g.DrawString("操作を終え、トリガーを離して待つと自動再試行（約1秒ごと）。", _smallFont, guideInk, 12, 35);

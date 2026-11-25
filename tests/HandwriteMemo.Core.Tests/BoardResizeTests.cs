@@ -35,6 +35,28 @@ public sealed class BoardResizeTests
     }
 
     [TestMethod]
+    public void ResizeFollowsMillimetreMotionAfterDeadZone()
+    {
+        foreach (var handedness in new[] { HandSide.Right, HandSide.Left })
+        {
+            var scene = Scene(new(Vector3.Zero, Quaternion.Identity));
+            scene.Handedness = handedness;
+            var at = scene.ResizeHandlePose.Position;
+            scene.Update(Hands(handedness, Hand(at)));
+            scene.Update(Hands(handedness, Hand(at, true)));
+            GrabFrameResult Drag(float distance) => scene.Update(Hands(handedness,
+                Hand(at + new Vector3(BoardResize.Direction(handedness) * distance, -distance, 0), true)));
+            Check(Drag(.003f).BoardSize == BoardSize.Default, "Movement inside the grip dead zone is ignored");
+            foreach (float distance in new[] { .010f, .011f, .012f, .011f })
+            {
+                var result = Drag(distance);
+                Near(result.BoardSize.WidthMetres, BoardSize.Default.WidthMetres + distance, "Width follows millimetre motion");
+                Near(result.BoardSize.HeightMetres, BoardSize.Default.HeightMetres + distance, "Height follows millimetre motion");
+            }
+        }
+    }
+
+    [TestMethod]
     public void ResizeApproach()
     {
         foreach (var size in new[] { BoardSize.Default, BoardResize.Maximum })
