@@ -93,7 +93,7 @@ if (-not $FrameworkDependent) {
     }
 }
 $runtimeFiles = @($runtimeFiles | Sort-Object -Unique)
-$userFiles = @('README.md', 'THIRD-PARTY-NOTICES.md')
+$userFiles = @('THIRD-PARTY-NOTICES.md')
 foreach ($relative in ($runtimeFiles + $userFiles)) {
     $sourceRoot = if ($runtimeFiles -contains $relative) { $publishRoot } else { Join-Path $repoRoot 'distribution' }
     $source = Join-Path $sourceRoot $relative
@@ -104,12 +104,6 @@ foreach ($relative in ($runtimeFiles + $userFiles)) {
 }
 
 if ($FrameworkDependent) {
-    $readme = Join-Path $packageRoot 'README.md'
-    $text = [IO.File]::ReadAllText($readme)
-    $claim = '**配布版は.NETを同梱する構成で、別途ランタイムを入れる必要はありません。**'
-    if (-not $text.Contains($claim)) { throw 'README runtime claim was not found; check-build labeling failed.' }
-    $text = $text.Replace($claim, '**この確認用ビルドは.NET未同梱です。.NET 10 Windows Desktop Runtime x64が必要です。一般配布には使わないでください。**')
-    [IO.File]::WriteAllText($readme, $text, [Text.UTF8Encoding]::new($false))
     $notice = Join-Path $packageRoot 'THIRD-PARTY-NOTICES.md'
     [IO.File]::AppendAllText($notice, "`r`nThis framework-dependent check build does not bundle .NET.`r`n")
 }

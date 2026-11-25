@@ -1,6 +1,5 @@
 # 配布の準備
 
-配布物に同梱する利用者向け手順は [distribution/README.md](../distribution/README.md) にあります。
 公開先はBOOTHの無料配布とGitHubのソース公開の予定です。ソースを公開する方法は、公開するときに決めます。
 
 製品名は `HnMemo`、配布リポジトリは `pealsha/hn-vr-memo` です。保存先は互換性のため `HandwriteMemo` を継続利用します。
@@ -20,7 +19,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 | 出力 | 内容 |
 |---|---|
 | `publish/` | SDKが発行したファイル。これをそのまま渡さない |
-| `HnMemo/` | 実行ファイル、必要なDLL、入力定義、README、ライセンス |
+| `HnMemo/` | 実行ファイル、必要なDLL、入力定義、ライセンス |
 | `HnMemo-<version>-win-x64-setup.exe` | Windows x64 用インストーラー。既定のインストール先は `Program Files\HnMemo`（変更可能） |
 | `contents.txt` | 同梱した全ファイルと容量 |
 | `verification.txt` | 方式・版・個人パス検索結果・生成した配布物の SHA-256 |
@@ -37,7 +36,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 - **トリミング（未使用の部品を取り除く処理）はしません。** WinFormsは公式に非対応です。VorticeやOpenVRも含めて、今回の範囲で不要な互換性リスクを増やしません。
 - 通常ビルドの `packages.lock.json` と、RID（OS・CPUの組合せ）を指定する配布用の `packages.win-x64.lock.json` を分け、既存ライブラリの版とハッシュは維持します。
 
-`scripts/package.ps1 -FrameworkDependent` は、ランタイムを含めない確認用 ZIP を生成します。ZIP 名に `framework-dependent-check` を付け、README も「.NET 10 Windows Desktop Runtime x64が必要・一般配布不可」へ切り替えます。
+`scripts/package.ps1 -FrameworkDependent` は、ランタイムを含めない確認用 ZIP を生成します。ZIP 名に `framework-dependent-check` を付け、`THIRD-PARTY-NOTICES.md` にも .NET 未同梱の注記を追記します。
 
 ## リリース前の確認チェックリスト
 
