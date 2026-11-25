@@ -21,7 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 |---|---|
 | `publish/` | SDKが発行したファイル。これをそのまま渡さない |
 | `HnMemo/` | 実行ファイル、必要なDLL、入力定義、README、ライセンス |
-| `HnMemo-<version>-win-x64-setup.exe` | Windows x64 用インストーラー。インストール先は `Program Files\HnMemo` 固定 |
+| `HnMemo-<version>-win-x64-setup.exe` | Windows x64 用インストーラー。既定のインストール先は `Program Files\HnMemo`（変更可能） |
 | `contents.txt` | 同梱した全ファイルと容量 |
 | `verification.txt` | 方式・版・個人パス検索結果・生成した配布物の SHA-256 |
 
