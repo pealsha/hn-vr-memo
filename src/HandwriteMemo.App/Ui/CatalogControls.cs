@@ -39,6 +39,18 @@ internal sealed class PageListBox : ListBox
 {
     protected override void WndProc(ref Message m)
     {
+        if (m.Msg == 0x0014 && m.WParam != IntPtr.Zero) // WM_ERASEBKGND: avoid flashing over owner-drawn rows.
+        {
+            int filledBottom = Math.Max(0, (Items.Count - TopIndex) * ItemHeight);
+            if (filledBottom < ClientSize.Height)
+            {
+                using var g = Graphics.FromHdc(m.WParam);
+                using var brush = new SolidBrush(BackColor);
+                g.FillRectangle(brush, 0, filledBottom, ClientSize.Width, ClientSize.Height - filledBottom);
+            }
+            m.Result = (IntPtr)1;
+            return;
+        }
         if (m.Msg == 0x0204) // WM_RBUTTONDOWN: native ListBox would collapse an extended selection first.
         {
             Focus();

@@ -243,51 +243,54 @@ internal sealed class DesktopCatalogView : IDisposable
 
     private void DrawPage(object? sender, DrawItemEventArgs e)
     {
-        if (e.Index < 0 || List.Items[e.Index] is not PageCatalogEntry entry)
+        if (e.Index < 0 || e.Bounds.Width <= 0 || e.Bounds.Height <= 0 || List.Items[e.Index] is not PageCatalogEntry entry)
             return;
+        using var buffer = BufferedGraphicsManager.Current.Allocate(e.Graphics, e.Bounds);
+        var g = buffer.Graphics;
         int Px(int logical) => List.LogicalToDeviceUnits(logical);
         int previewHeight = PreviewHeight;
         float scale = List.DeviceDpi / 96f;
         var rect = e.Bounds;
         bool selected = (e.State & DrawItemState.Selected) != 0;
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
         using (var background = new SolidBrush(UiTheme.Background))
-            e.Graphics.FillRectangle(background, rect);
-        UiTheme.Tile(e.Graphics, new RectangleF(rect.X + Px(5), rect.Y + Px(3), rect.Width - 2 * Px(5), rect.Height - 2 * Px(3)),
+            g.FillRectangle(background, rect);
+        UiTheme.Tile(g, new RectangleF(rect.X + Px(5), rect.Y + Px(3), rect.Width - 2 * Px(5), rect.Height - 2 * Px(3)),
             selected ? UiTheme.Selection : UiTheme.Surface, selected ? UiTheme.Accent : UiTheme.Border, (selected ? 2 : 1) * scale, UiDesign.DesktopRadius * scale);
         int x = rect.X + Px(12), y = rect.Y + Px(10), w = Math.Max(Px(20), rect.Width - Px(24));
         if (IsSelectionMode)
         {
             // Standard checkbox glyph; native selected state is the only source of its value.
-            int side = CheckBoxRenderer.GetGlyphSize(e.Graphics, System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal).Width;
+            int side = CheckBoxRenderer.GetGlyphSize(g, System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal).Width;
             int gutter = side + Px(10);
-            CheckBoxRenderer.DrawCheckBox(e.Graphics, new Point(x, rect.Y + (rect.Height - side) / 2),
+            CheckBoxRenderer.DrawCheckBox(g, new Point(x, rect.Y + (rect.Height - side) / 2),
                 selected ? System.Windows.Forms.VisualStyles.CheckBoxState.CheckedNormal : System.Windows.Forms.VisualStyles.CheckBoxState.UncheckedNormal);
             x += gutter;
             w = Math.Max(Px(20), w - gutter);
         }
         if (_previews.TryGetValue(entry.JsonPath, out var preview))
-            e.Graphics.DrawImage(preview.Image, new Rectangle(x, y, w, previewHeight));
+            g.DrawImage(preview.Image, new Rectangle(x, y, w, previewHeight));
         var document = entry.Document;
         bool live = document.Id == _page.Id && !entry.IsTrash;
         var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix;
-        TextRenderer.DrawText(e.Graphics, ((live ? _page.IsPinned : document.IsPinned) ? "★ " : "") + (live ? _page.DisplayName : document.DisplayName), List.Font,
+        TextRenderer.DrawText(g, ((live ? _page.IsPinned : document.IsPinned) ? "★ " : "") + (live ? _page.DisplayName : document.DisplayName), List.Font,
             new Rectangle(x, y + previewHeight, w, Px(24)), selected ? UiTheme.OnAccent : List.ForeColor, flags);
         var dateFont = UiTheme.DesktopSmallFont;
         var remaining = entry.IsTrash ? _retention.RemainingDays(entry, _retentionDays()) : null;
         if (remaining is { } days)
         {
             string text = $"あと {days} 日";
-            int badgeWidth = TextRenderer.MeasureText(e.Graphics, text, dateFont).Width + Px(8);
+            int badgeWidth = TextRenderer.MeasureText(g, text, dateFont).Width + Px(8);
             var badge = new Rectangle(x + w - badgeWidth, y + Math.Max(0, previewHeight - Px(24)), badgeWidth, Px(24));
-            UiTheme.Tile(e.Graphics, badge, UiTheme.Surface, UiTheme.Border, scale, 4 * scale);
-            TextRenderer.DrawText(e.Graphics, text, dateFont, badge, UiTheme.Text,
+            UiTheme.Tile(g, badge, UiTheme.Surface, UiTheme.Border, scale, 4 * scale);
+            TextRenderer.DrawText(g, text, dateFont, badge, UiTheme.Text,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine);
         }
-        TextRenderer.DrawText(e.Graphics, (live ? _page.Title : document.Title).Length > 0 ? $"作成 {document.CreatedUtc.ToLocalTime():yyyy/MM/dd  HH:mm}" : "", dateFont,
+        TextRenderer.DrawText(g, (live ? _page.Title : document.Title).Length > 0 ? $"作成 {document.CreatedUtc.ToLocalTime():yyyy/MM/dd  HH:mm}" : "", dateFont,
             new Rectangle(x, y + previewHeight + Px(24), w, Px(22)), selected ? UiTheme.OnAccent : UiTheme.Secondary, flags);
         if ((e.State & DrawItemState.Focus) != 0)
-            ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(rect, -Px(8), -Px(5)), selected ? UiTheme.OnAccent : UiTheme.Text, selected ? UiTheme.Selection : UiTheme.Surface);
+            ControlPaint.DrawFocusRectangle(g, Rectangle.Inflate(rect, -Px(8), -Px(5)), selected ? UiTheme.OnAccent : UiTheme.Text, selected ? UiTheme.Selection : UiTheme.Surface);
+        buffer.Render(e.Graphics);
     }
 
     public void Dispose()
